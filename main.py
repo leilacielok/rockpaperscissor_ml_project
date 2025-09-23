@@ -1,13 +1,19 @@
 from rockpaperscissors import data_utils, config, architectures
 import matplotlib.pyplot as plt
-import numpy as np, tensorflow as tf, random, os
+import numpy as np, tensorflow as tf, random, os, time
 from sklearn.metrics import classification_report, confusion_matrix
-import random, os
+from pathlib import Path
 
+# --- Reproducibility ---
 tf.random.set_seed(config.SEED)
 np.random.seed(config.SEED)
 random.seed(config.SEED)
 os.environ["PYTHONHASHSEED"] = str(config.SEED)
+
+# --- Create output folders / ensure they exist ---
+from pathlib import Path
+Path("models").mkdir(exist_ok=True)
+Path("reports").mkdir(exist_ok=True)
 
 def main():
     # 1. Load data
@@ -17,12 +23,16 @@ def main():
     model = architectures.model_a()
     model.summary()
 
-    # 3. Train with callbacks
+    # 3. Train with callbacks + timing
     callbacks = [
         tf.keras.callbacks.EarlyStopping(monitor="val_loss", patience=5, restore_best_weights=True),
         tf.keras.callbacks.ReduceLROnPlateau(monitor="val_loss", patience=3, factor=0.5, min_lr=1e-6),
     ]
+
+    t0 = time.time()
     history = model.fit(train_ds, validation_data=val_ds, epochs=30, callbacks=callbacks)
+    t1 = time.time()
+    print(f"Total training time: {t1 - t0:.1f}s  |  Avg/epoch: {(t1 - t0) / len(history.history['loss']):.2f}s")
 
     # 4. Evaluate on validation set
     val_loss, val_acc = model.evaluate(val_ds, verbose=0)
@@ -30,7 +40,7 @@ def main():
     best_epoch = 1 + int(np.argmin(history.history["val_loss"]))
     print(f"Early stopped at epoch {best_epoch} (best val_loss={min(history.history['val_loss']):.4f})")
 
-    history = model.fit(train_ds, validation_data=val_ds, epochs=30, callbacks=callbacks)
+    # Save model
     model.save("models/best_baseline.keras")
 
     # 5. Evaluate on external test set
@@ -60,8 +70,11 @@ def main():
         plt.yticks(ticks, class_names)
         plt.xlabel("Predicted");
         plt.ylabel("True")
-        plt.tight_layout();
+        plt.tight_layout()
+        plt.savefig("reports/fig_confusion_matrix.png", dpi=150, bbox_inches="tight")
         plt.show()
+        plt.close()
+
 
     except Exception as e:
         print("No external test set found:", e)
@@ -70,16 +83,18 @@ def main():
     plt.figure()
     plt.plot(history.history["loss"], label="train_loss")
     plt.plot(history.history["val_loss"], label="val_loss")
-    plt.xlabel("Epoch"); plt.ylabel("Loss"); plt.legend(); plt.title("Loss"); plt.show()
+    plt.xlabel("Epoch"); plt.ylabel("Loss"); plt.legend(); plt.title("Loss")
     plt.savefig("reports/fig_training_loss.png", dpi=150, bbox_inches="tight")
     plt.show()
 
     plt.figure()
     plt.plot(history.history["accuracy"], label="train_acc")
     plt.plot(history.history["val_accuracy"], label="val_acc")
-    plt.xlabel("Epoch"); plt.ylabel("Accuracy"); plt.legend(); plt.title("Accuracy"); plt.show()
+    plt.xlabel("Epoch"); plt.ylabel("Accuracy"); plt.legend(); plt.title("Accuracy")
     plt.savefig("reports/fig_training_accuracy.png", dpi=150, bbox_inches="tight")
     plt.show()
+    plt.close()
+
 
 if __name__ == "__main__":
     main()

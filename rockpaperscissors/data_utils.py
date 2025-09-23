@@ -1,7 +1,7 @@
 import tensorflow as tf
 from . import config
 
-def load_train_val(validation_split: float = 0.2, augment: bool = True):
+def load_train_val(validation_split: float = 0.2, augment: bool = True, cache: bool = True):
     """
     Returns (train_ds, val_ds) from the folder structure:
       data/
@@ -13,7 +13,7 @@ def load_train_val(validation_split: float = 0.2, augment: bool = True):
     """
     data_dir = config.DATA_ROOT
 
-    # Base datasets (Keras will stratify by folder)
+    # 1) Base datasets (Keras will stratify by folder)
     train_ds = tf.keras.preprocessing.image_dataset_from_directory(
         data_dir,
         validation_split=validation_split,
@@ -23,7 +23,7 @@ def load_train_val(validation_split: float = 0.2, augment: bool = True):
         batch_size=config.BATCH_SIZE,
         label_mode="categorical",
         shuffle=True,
-        class_names=config.CLASSES,  # <- force only 3 classes
+        class_names=config.CLASSES,
     )
     val_ds = tf.keras.preprocessing.image_dataset_from_directory(
         data_dir,
@@ -37,7 +37,7 @@ def load_train_val(validation_split: float = 0.2, augment: bool = True):
         class_names=config.CLASSES,
     )
 
-    # Normalize pixels to [0,1]
+    # 2) Preprocessing layers
     normalizer = tf.keras.layers.Rescaling(1.0 / 255.0)
 
     # Optional augmentation (train only)
@@ -53,7 +53,11 @@ def load_train_val(validation_split: float = 0.2, augment: bool = True):
 
     val_ds = val_ds.map(lambda x, y: (normalizer(x), y), num_parallel_calls=tf.data.AUTOTUNE)
 
-    # Performance
+    # 3) Performance: cache -> prefetch
+    if cache:
+        train_ds = train_ds.cache()
+        val_ds = val_ds.cache()
+
     train_ds = train_ds.prefetch(tf.data.AUTOTUNE)
     val_ds   = val_ds.prefetch(tf.data.AUTOTUNE)
 
@@ -61,9 +65,7 @@ def load_train_val(validation_split: float = 0.2, augment: bool = True):
 
 
 # data_utils.py (add)
-def load_external_test():
-    import tensorflow as tf
-    from . import config
+def load_external_test(cache: bool = True):
     test_dir = "data/rps-cv-images"
     ds = tf.keras.preprocessing.image_dataset_from_directory(
         test_dir,
@@ -73,6 +75,9 @@ def load_external_test():
         shuffle=False,
         class_names=config.CLASSES,
     )
-    norm = tf.keras.layers.Rescaling(1./255)
-    return ds.map(lambda x,y: (norm(x), y), num_parallel_calls=tf.data.AUTOTUNE).prefetch(tf.data.AUTOTUNE)
+    norm = tf.keras.layers.Rescaling(1.0/255.0)
+    ds = ds.map(lambda x, y: (norm(x), y), num_parallel_calls=tf.data.AUTOTUNE)
+    if cache:
+        ds = ds.cache()
+    return ds.prefetch(tf.data.AUTOTUNE)
 
