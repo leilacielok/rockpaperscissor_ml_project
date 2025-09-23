@@ -1,4 +1,3 @@
-# rockpaperscissors/data_utils.py
 import tensorflow as tf
 from . import config
 
@@ -59,4 +58,21 @@ def load_train_val(validation_split: float = 0.2, augment: bool = True):
     val_ds   = val_ds.prefetch(tf.data.AUTOTUNE)
 
     return train_ds, val_ds
+
+
+# data_utils.py (add)
+def load_external_test():
+    import tensorflow as tf
+    from . import config
+    test_dir = "data/rps-cv-images"
+    ds = tf.keras.preprocessing.image_dataset_from_directory(
+        test_dir,
+        image_size=(config.IMG_SIZE, config.IMG_SIZE),
+        batch_size=config.BATCH_SIZE,
+        label_mode="categorical",
+        shuffle=False,
+        class_names=config.CLASSES,
+    )
+    norm = tf.keras.layers.Rescaling(1./255)
+    return ds.map(lambda x,y: (norm(x), y), num_parallel_calls=tf.data.AUTOTUNE).prefetch(tf.data.AUTOTUNE)
 
