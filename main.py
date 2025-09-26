@@ -1,100 +1,44 @@
-from rockpaperscissors import data_utils, config, architectures
-import matplotlib.pyplot as plt
-import numpy as np, tensorflow as tf, random, os, time
-from sklearn.metrics import classification_report, confusion_matrix
+from rockpaperscissors import config, data_utils, architectures, training, evaluation
+import numpy as np, tensorflow as tf, random, os
 from pathlib import Path
 
-# --- Reproducibility ---
-tf.random.set_seed(config.SEED)
-np.random.seed(config.SEED)
-random.seed(config.SEED)
+# Reproducibility
+tf.random.set_seed(config.SEED); np.random.seed(config.SEED); random.seed(config.SEED)
 os.environ["PYTHONHASHSEED"] = str(config.SEED)
-
-# --- Create output folders / ensure they exist ---
-from pathlib import Path
-Path("models").mkdir(exist_ok=True)
-Path("reports").mkdir(exist_ok=True)
+Path("models").mkdir(exist_ok=True); Path("reports").mkdir(exist_ok=True)
 
 def main():
-    # 1. Load data
+    # Data
     train_ds, val_ds = data_utils.load_train_val(validation_split=0.2, augment=True)
 
-    # 2. Pick a model (baseline for now)
+    # Choose model
     model = architectures.model_a()
     model.summary()
 
-    # 3. Train with callbacks + timing
-    callbacks = [
-        tf.keras.callbacks.EarlyStopping(monitor="val_loss", patience=5, restore_best_weights=True),
-        tf.keras.callbacks.ReduceLROnPlateau(monitor="val_loss", patience=3, factor=0.5, min_lr=1e-6),
-    ]
-
-    t0 = time.time()
-    history = model.fit(train_ds, validation_data=val_ds, epochs=30, callbacks=callbacks)
-    t1 = time.time()
-    print(f"Total training time: {t1 - t0:.1f}s  |  Avg/epoch: {(t1 - t0) / len(history.history['loss']):.2f}s")
-
-    # 4. Evaluate on validation set
-    val_loss, val_acc = model.evaluate(val_ds, verbose=0)
-    print(f"Validation accuracy: {val_acc:.4f}")
+    # Train
+    history, runtime = training.train(model, train_ds, val_ds, epochs=30)
+    print(f"Total training time: {runtime:.1f}s | Avg/epoch: {runtime/len(history.history['loss']):.2f}s")
     best_epoch = 1 + int(np.argmin(history.history["val_loss"]))
     print(f"Early stopped at epoch {best_epoch} (best val_loss={min(history.history['val_loss']):.4f})")
-
-    # Save model
     model.save("models/best_baseline.keras")
 
-    # 5. Evaluate on external test set
+    # Validation metrics
+    val_loss, val_acc = model.evaluate(val_ds, verbose=0)
+    print(f"Validation accuracy: {val_acc:.4f}")
+
+    # External test (optional)
     try:
         test_ds = data_utils.load_external_test()
-        test_loss, test_acc = model.evaluate(test_ds, verbose=0)
-        print(f"External test accuracy: {test_acc:.4f}")
-
-        # 6. Classification report + confusion matrix
-        class_names = config.CLASSES
-        y_true, y_pred = [], []
-        for x, y in test_ds:
-            probs = model.predict(x, verbose=0)
-            y_pred.append(np.argmax(probs, axis=1))
-            y_true.append(np.argmax(y.numpy(), axis=1))
-        y_true = np.concatenate(y_true)
-        y_pred = np.concatenate(y_pred)
-        print(classification_report(y_true, y_pred, target_names=class_names))
-
-        cm = confusion_matrix(y_true, y_pred)
-        plt.figure()
-        plt.imshow(cm, interpolation="nearest")
-        plt.title("Confusion Matrix (external test)")
-        plt.colorbar()
-        ticks = np.arange(len(class_names))
-        plt.xticks(ticks, class_names, rotation=45)
-        plt.yticks(ticks, class_names)
-        plt.xlabel("Predicted");
-        plt.ylabel("True")
-        plt.tight_layout()
-        plt.savefig("reports/fig_confusion_matrix.png", dpi=150, bbox_inches="tight")
-        plt.show()
-        plt.close()
-
-
+        res = evaluation.evaluate_on(test_ds, model, config.CLASSES)
+        print(f"External test accuracy: {res['acc']:.4f}")
+        print(res["report_txt"])
+        evaluation.plot_confusion(res["cm"], config.CLASSES, "reports/confusion_matrix.png")
     except Exception as e:
         print("No external test set found:", e)
 
-    # 7. Plot training curves
-    plt.figure()
-    plt.plot(history.history["loss"], label="train_loss")
-    plt.plot(history.history["val_loss"], label="val_loss")
-    plt.xlabel("Epoch"); plt.ylabel("Loss"); plt.legend(); plt.title("Loss")
-    plt.savefig("reports/fig_training_loss.png", dpi=150, bbox_inches="tight")
-    plt.show()
-
-    plt.figure()
-    plt.plot(history.history["accuracy"], label="train_acc")
-    plt.plot(history.history["val_accuracy"], label="val_acc")
-    plt.xlabel("Epoch"); plt.ylabel("Accuracy"); plt.legend(); plt.title("Accuracy")
-    plt.savefig("reports/fig_training_accuracy.png", dpi=150, bbox_inches="tight")
-    plt.show()
-    plt.close()
-
+    # Curves
+    evaluation.plot_history(history, outdir="reports")
 
 if __name__ == "__main__":
     main()
+

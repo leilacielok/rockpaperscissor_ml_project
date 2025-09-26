@@ -3,11 +3,7 @@ from . import config
 
 def load_train_val(validation_split: float = 0.2, augment: bool = True, cache: bool = True):
     """
-    Returns (train_ds, val_ds) from the folder structure:
-      data/
-        rock/
-        paper/
-        scissors/
+    Returns (train_ds, val_ds) from the folder data
     Applies resize to (IMG_SIZE, IMG_SIZE) and normalization to [0,1].
     If augment=True, applies lightweight data augmentation to the training set.
     """
@@ -64,7 +60,6 @@ def load_train_val(validation_split: float = 0.2, augment: bool = True, cache: b
     return train_ds, val_ds
 
 
-# data_utils.py (add)
 def load_external_test(cache: bool = True):
     test_dir = "data/rps-cv-images"
     ds = tf.keras.preprocessing.image_dataset_from_directory(
