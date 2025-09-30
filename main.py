@@ -42,3 +42,34 @@ def main():
 if __name__ == "__main__":
     main()
 
+    # --- Hyperparameter tuning (optional section) ---
+    from itertools import product
+    search_space = {
+        "lr":     [1e-3, 8e-4, 5e-4],
+        "drop":   [0.2, 0.3],
+        "batch":  [16, 32],
+        "augment":[True, False],
+    }
+
+    best = None
+    for lr, drop, batch, aug in product(search_space["lr"],
+                                        search_space["drop"],
+                                        search_space["batch"],
+                                        search_space["augment"]):
+        print(f"\n=== Trying lr={lr}, drop={drop}, batch={batch}, augment={aug} ===")
+        # ricarica i dati con i parametri giusti
+        train_ds, val_ds = data_utils.load_train_val(
+            validation_split=0.2, augment=aug
+        )
+
+        model = architectures.model_b()  # o la CNN che vuoi testare
+        model.optimizer.learning_rate = lr
+        history, runtime = training.train(model, train_ds, val_ds, epochs=20)
+
+        val_acc = max(history.history["val_accuracy"])
+        if best is None or val_acc > best["val_acc"]:
+            best = {"lr": lr, "drop": drop, "batch": batch,
+                    "augment": aug, "val_acc": val_acc}
+        print("Current best:", best)
+
+    print("=== BEST CONFIG ===", best)

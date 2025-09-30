@@ -9,7 +9,17 @@ def load_train_val(validation_split: float = 0.2, augment: bool = True, cache: b
     """
     data_dir = config.DATA_ROOT
 
+    val_raw = tf.keras.preprocessing.image_dataset_from_directory(
+        data_dir, validation_split=validation_split, subset="validation",
+        seed=config.SEED, image_size=(config.IMG_SIZE, config.IMG_SIZE),
+        batch_size=config.BATCH_SIZE, label_mode="categorical",
+        shuffle=False, class_names=config.CLASSES,
+    )
+    file_paths_val = val_raw.file_paths
+
     # 1) Base datasets (Keras will stratify by folder)
+    val_ds = val_raw.map(lambda x, y: (normalizer(x), y), num_parallel_calls=tf.data.AUTOTUNE)
+
     train_ds = tf.keras.preprocessing.image_dataset_from_directory(
         data_dir,
         validation_split=validation_split,
@@ -19,17 +29,6 @@ def load_train_val(validation_split: float = 0.2, augment: bool = True, cache: b
         batch_size=config.BATCH_SIZE,
         label_mode="categorical",
         shuffle=True,
-        class_names=config.CLASSES,
-    )
-    val_ds = tf.keras.preprocessing.image_dataset_from_directory(
-        data_dir,
-        validation_split=validation_split,
-        subset="validation",
-        seed=config.SEED,
-        image_size=(config.IMG_SIZE, config.IMG_SIZE),
-        batch_size=config.BATCH_SIZE,
-        label_mode="categorical",
-        shuffle=False,
         class_names=config.CLASSES,
     )
 
@@ -57,7 +56,7 @@ def load_train_val(validation_split: float = 0.2, augment: bool = True, cache: b
     train_ds = train_ds.prefetch(tf.data.AUTOTUNE)
     val_ds   = val_ds.prefetch(tf.data.AUTOTUNE)
 
-    return train_ds, val_ds
+    return train_ds, val_ds, file_paths_val
 
 
 def load_external_test(cache: bool = True):
