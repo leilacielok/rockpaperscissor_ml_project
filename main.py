@@ -22,15 +22,25 @@ def train_and_report(model_name, model, train_ds, val_ds, file_paths_val):
     print(f"Early stopped at epoch {best_epoch} (best val_loss={min(history.history['val_loss']):.4f})")
     model.save(f"models/{model_name}.keras")
 
+    # folder for reports
+    model_dir = Path("reports") / model_name
+    model_dir.mkdir(parents=True, exist_ok=True)
+
     # Validation metrics
     res_val = evaluation.evaluate_on(val_ds, model, config.CLASSES)
     print(f"Validation accuracy: {res_val['acc']:.4f}")
 
     # Reports & plots
-    evaluation.save_report(res_val["report_txt"], f"reports/{model_name}_val_classification_report.txt")
-    evaluation.plot_confusion(res_val["cm"], config.CLASSES, f"reports/{model_name}_val_confusion_matrix.png",
-                              title=f"Confusion Matrix (val) – {model_name}")
-    evaluation.plot_history(history, outdir=f"reports/{model_name}")
+    evaluation.save_report(
+        res_val["report_txt"],
+        str(model_dir / "val_classification_report.txt")
+    )
+    evaluation.plot_confusion(
+        res_val["cm"], config.CLASSES,
+        outpath=str(model_dir / "val_confusion_matrix.png"),
+        title=f"Confusion Matrix (val) – {model_name}"
+    )
+    evaluation.plot_history(history, outdir=str(model_dir))
 
     # Misclassified: most confident errors
     try:
@@ -85,10 +95,17 @@ def main():
         best_model = tf.keras.models.load_model(f"models/{best_name}.keras")
         test_ds = data_utils.load_external_test()
         res_test = evaluation.evaluate_on(test_ds, best_model, config.CLASSES)
-        evaluation.save_report(res_test["report_txt"], f"reports/{best_name}_test_classification_report.txt")
+
+        best_dir = Path("reports") / best_name
+        best_dir.mkdir(parents=True, exist_ok=True)
+
+        evaluation.save_report(
+            res_test["report_txt"],
+            str(best_dir / "test_classification_report.txt")
+        )
         evaluation.plot_confusion(
             res_test["cm"], config.CLASSES,
-            f"reports/{best_name}_test_confusion_matrix.png",
+            outpath=str(best_dir / "test_confusion_matrix.png"),
             title=f"Confusion Matrix (external test) – {best_name}"
         )
     except Exception as e:

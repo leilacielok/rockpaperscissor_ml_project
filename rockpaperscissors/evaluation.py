@@ -3,11 +3,6 @@ from sklearn.metrics import classification_report, confusion_matrix
 from PIL import Image
 from pathlib import Path
 
-from pathlib import Path
-import numpy as np
-import matplotlib.pyplot as plt
-from sklearn.metrics import classification_report, confusion_matrix
-
 def evaluate_on(ds, model, class_names):
     y_true, y_pred = [], []
     for x, y in ds:
