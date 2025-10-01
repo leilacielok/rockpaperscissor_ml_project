@@ -2,7 +2,7 @@ import time
 import tensorflow as tf
 from pathlib import Path
 
-def make_callbacks():
+def make_callbacks(checkpoint_path="models/best.keras"):
     Path("models").mkdir(exist_ok=True, parents=True)
     return [
         tf.keras.callbacks.EarlyStopping(monitor="val_loss", patience=5, restore_best_weights=True),

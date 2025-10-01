@@ -1,5 +1,7 @@
 import tensorflow as tf
 from . import config
+import matplotlib.pyplot as plt
+from PIL import Image
 
 def model_a():
     """Very small, fast CNN (good baseline)."""
