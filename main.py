@@ -51,6 +51,7 @@ def main():
     evaluation.print_class_histogram(val_ds)
 
     # === Four architectures ===
+
     results = []
     for name, builder in [
         ("model_a", architectures.model_a),
@@ -94,7 +95,7 @@ if __name__ == "__main__":
     for lr, batch, aug in product(search_space["lr"], search_space["batch"], search_space["augment"]):
         print(f"\n=== Trying lr={lr}, batch={batch}, augment={aug} ===")
         # load data with the parameters
-        train_ds, val_ds, _ = data_utils.load_train_val(validation_split=0.2, augment=aug, batch_size=batch)
+        train_ds, val_ds, _ = data_utils.load_train_val_stratified(validation_split=0.2, augment=aug, batch_size=batch)
         model = architectures.model_a()
         model.optimizer.learning_rate = lr
 
