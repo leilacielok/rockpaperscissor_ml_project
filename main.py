@@ -47,20 +47,30 @@ def train_and_report(model_name, model, train_ds, val_ds, file_paths_val):
 
 def main():
     # Data
-    train_ds, val_ds, file_paths_val = data_utils.load_train_val_stratified(validation_split=0.2, augment=True)
+    train_ds, val_ds, file_paths_val = data_utils.load_train_val_stratified(
+        validation_split=0.2, augment=True
+    )
     evaluation.print_class_histogram(val_ds)
 
-    # === Four architectures ===
+    # Priors
+    priors = data_utils.compute_class_priors(train_ds, len(config.CLASSES))
+    log_priors = np.log(priors + 1e-8)
+    print("class priors:", priors)
 
-    results = []
-    for name, builder in [
+    models_to_try = [
         ("model_a", architectures.model_a),
         ("model_b", architectures.model_b),
-        ("model_c", architectures.model_c),
-        ("model_d", architectures.model_d),
-    ]:
+        ("model_c", lambda: architectures.model_c(log_priors)),
+        ("model_d", lambda: architectures.model_d(log_priors)),
+    ]
+
+    # Four architectures
+    results = []
+    for name, builder in models_to_try:   # ← usa questa, non riscrivere la lista
         tf.keras.backend.clear_session()
-        acc, runtime, n_params, best_vloss = train_and_report(name, builder(), train_ds, val_ds, file_paths_val)
+        acc, runtime, n_params, best_vloss = train_and_report(
+            name, builder(), train_ds, val_ds, file_paths_val
+        )
         results.append((name, acc, runtime, n_params, best_vloss))
 
     # Table for report summary
@@ -69,15 +79,18 @@ def main():
         w.writerow(["model", "val_accuracy", "train_runtime_s", "params", "best_val_loss"])
         w.writerows(results)
 
-    # === External test on the best model ===
+    # External test on the best model
     try:
         best_name = max(results, key=lambda t: t[1])[0]
         best_model = tf.keras.models.load_model(f"models/{best_name}.keras")
         test_ds = data_utils.load_external_test()
         res_test = evaluation.evaluate_on(test_ds, best_model, config.CLASSES)
         evaluation.save_report(res_test["report_txt"], f"reports/{best_name}_test_classification_report.txt")
-        evaluation.plot_confusion(res_test["cm"], config.CLASSES, f"reports/{best_name}_test_confusion_matrix.png",
-                                  title=f"Confusion Matrix (external test) – {best_name}")
+        evaluation.plot_confusion(
+            res_test["cm"], config.CLASSES,
+            f"reports/{best_name}_test_confusion_matrix.png",
+            title=f"Confusion Matrix (external test) – {best_name}"
+        )
     except Exception as e:
         print("No external test set found:", e)
 
@@ -85,24 +98,28 @@ def main():
 if __name__ == "__main__":
     main()
 
-    # Hyperparameter tuning
-    search_space = {
-        "lr": [1e-3, 5e-4, 3e-4],
-        "batch": [16, 32],
-        "augment": [True, False],
-    }
-    best = None
-    for lr, batch, aug in product(search_space["lr"], search_space["batch"], search_space["augment"]):
-        print(f"\n=== Trying lr={lr}, batch={batch}, augment={aug} ===")
-        # load data with the parameters
-        train_ds, val_ds, _ = data_utils.load_train_val_stratified(validation_split=0.2, augment=aug, batch_size=batch)
-        model = architectures.model_a()
-        model.optimizer.learning_rate = lr
+    # change in True only if needed
+    RUN_TUNING = False
+    if RUN_TUNING:
 
-        history, runtime = training.train(model, train_ds, val_ds, epochs=20)
-        val_acc = max(history.history["val_accuracy"])
-        cand = {"lr": lr, "batch": batch, "augment": aug, "val_acc": float(val_acc)}
-        if best is None or val_acc > best["val_acc"]:
-            best = cand
-        print("Current best:", best)
-    print("=== BEST CONFIG ===", best)
+        # Hyperparameter tuning
+        search_space = {
+            "lr": [1e-3, 5e-4, 3e-4],
+            "batch": [16, 32],
+            "augment": [True, False],
+        }
+        best = None
+        for lr, batch, aug in product(search_space["lr"], search_space["batch"], search_space["augment"]):
+            print(f"\n=== Trying lr={lr}, batch={batch}, augment={aug} ===")
+            # load data with the parameters
+            train_ds, val_ds, _ = data_utils.load_train_val_stratified(validation_split=0.2, augment=aug, batch_size=batch)
+            model = architectures.model_a()
+            model.optimizer.learning_rate = lr
+
+            history, runtime = training.train(model, train_ds, val_ds, epochs=20)
+            val_acc = max(history.history["val_accuracy"])
+            cand = {"lr": lr, "batch": batch, "augment": aug, "val_acc": float(val_acc)}
+            if best is None or val_acc > best["val_acc"]:
+                best = cand
+            print("Current best:", best)
+        print("=== BEST CONFIG ===", best)

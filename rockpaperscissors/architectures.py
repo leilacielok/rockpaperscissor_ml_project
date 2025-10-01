@@ -3,35 +3,30 @@ from . import config
 import matplotlib.pyplot as plt
 from PIL import Image
 
-L2 = tf.keras.regularizers.l2(1e-4)
+def ln_relu(x, axis=(-1,)):
+    x = tf.keras.layers.LayerNormalization(axis=axis)(x)
+    return tf.keras.layers.ReLU()(x)
 
-def sep_block(x, filters):
-    y = tf.keras.layers.SeparableConv2D(filters, 3, padding="same", use_bias=False)(x)
-    y = tf.keras.layers.BatchNormalization()(y)
-    y = tf.keras.layers.ReLU()(y)
+def sep_block_ln(x, filters, sd_rate=0.0):
+    y = ln_relu(x)
+    y = tf.keras.layers.SeparableConv2D(filters, 3, padding="same", use_bias=False)(y)
+    if sd_rate > 0:
+        y = tf.keras.layers.SpatialDropout2D(sd_rate)(y)
     return y
 
-def residual_sep_block(x, filters, pool_first=False):
-    """
-    Residual block with two SeparableConv2D.
-    - if pool_first=True, MaxPool on main and on shortcut before the match.
-    - Projects the shortcut to 'filters'
-    """
+def residual_sep_block_ln(x, filters, downsample=False, sd_rate=0.1):
     shortcut = x
-    if pool_first:
-        x = tf.keras.layers.MaxPool2D()(x)
+    y = sep_block_ln(x, filters, sd_rate=sd_rate)
+    y = sep_block_ln(y, filters, sd_rate=sd_rate)
+
+    if downsample:
+        y = tf.keras.layers.MaxPool2D()(y)
         shortcut = tf.keras.layers.MaxPool2D()(shortcut)
-
-    y = sep_block(x, filters)
-    y = tf.keras.layers.SpatialDropout2D(0.1)(y)
-    y = sep_block(y, filters)
-
     if shortcut.shape[-1] != filters:
-        shortcut = tf.keras.layers.Conv2D(filters, 1, padding="same", use_bias=False, kernel_regularizer=L2)(shortcut)
-        shortcut = tf.keras.layers.BatchNormalization()(shortcut)
+        s = ln_relu(shortcut)
+        shortcut = tf.keras.layers.Conv2D(filters, 1, padding="same", use_bias=False)(s)
 
     out = tf.keras.layers.Add()([shortcut, y])
-    out = tf.keras.layers.ReLU()(out)
     return out
 
 
@@ -78,58 +73,56 @@ def model_b():
     return model
 
 
-def model_c():
+def model_c(log_priors=None):
     inputs = tf.keras.Input((config.IMG_SIZE, config.IMG_SIZE, 3))
 
     # stem
-    x = sep_block(inputs, 32)
-    x = sep_block(x, 32)
-    x = tf.keras.layers.MaxPool2D()(x)
-
-    # block with 64 ch + residual
-    y = sep_block(x, 64)
-    y = sep_block(y, 64)
-    x_proj = tf.keras.layers.Conv2D(64, 1, padding="same", use_bias=False, kernel_regularizer=L2)(x)
-    x_proj = tf.keras.layers.BatchNormalization()(x_proj)
-    x = tf.keras.layers.Add()([x_proj, y])
-    x = tf.keras.layers.ReLU()(x)
-    x = tf.keras.layers.MaxPool2D()(x)
+    x = tf.keras.layers.Conv2D(32, 3, padding="same", use_bias=False)(inputs)
+    x = residual_sep_block_ln(x, 32, downsample=True,  sd_rate=0.05)
+    x = residual_sep_block_ln(x, 64, downsample=True,  sd_rate=0.10)
 
     # head
-    x = sep_block(x, 96)
+    x = ln_relu(x)
     x = tf.keras.layers.GlobalAveragePooling2D()(x)
-    x = tf.keras.layers.Dropout(0.4)(x)
-    x = tf.keras.layers.Dense(96, activation="relu", kernel_regularizer=L2)(x)
-    outputs = tf.keras.layers.Dense(len(config.CLASSES), activation="softmax")(x)
+    x = tf.keras.layers.Dropout(0.3)(x)
+    x = tf.keras.layers.Dense(96, activation="relu")(x)
 
-    model = tf.keras.Model(inputs, outputs)
-    loss = tf.keras.losses.CategoricalCrossentropy(label_smoothing=0.05)
-    model.compile(optimizer=tf.keras.optimizers.Adam(3e-4),
-                  loss=loss, metrics=["accuracy"])
+    # logits
+    bias_init = None
+    if log_priors is not None:
+        bias_init = tf.keras.initializers.Constant(log_priors.tolist())
+    logits = tf.keras.layers.Dense(len(config.CLASSES), bias_initializer=bias_init)(x)
+
+    model = tf.keras.Model(inputs, logits)
+    opt  = tf.keras.optimizers.Adam(learning_rate=3e-4, clipnorm=1.0)
+    loss = tf.keras.losses.CategoricalCrossentropy(from_logits=True, label_smoothing=0.05)
+    model.compile(optimizer=opt, loss=loss, metrics=["accuracy"])
     return model
 
 
-def model_d():
+def model_d(log_priors=None):
     inputs = tf.keras.Input((config.IMG_SIZE, config.IMG_SIZE, 3))
 
     # stem
-    x = sep_block(inputs, 32)
-    x = sep_block(x, 32)
-    x = tf.keras.layers.MaxPool2D()(x)
+    x = tf.keras.layers.Conv2D(32, 3, padding="same", use_bias=False)(inputs)
+    x = residual_sep_block_ln(x, 32, downsample=True,  sd_rate=0.05)
+    x = residual_sep_block_ln(x, 64, downsample=True,  sd_rate=0.10)
+    x = residual_sep_block_ln(x, 64, downsample=False, sd_rate=0.10)
 
-    # residual block
-    x = residual_sep_block(x, 64, pool_first=False)
-    x = tf.keras.layers.MaxPool2D()(x)
-
-    # Head
-    x = sep_block(x, 96)
+    # head
+    x = ln_relu(x)
     x = tf.keras.layers.GlobalAveragePooling2D()(x)
-    x = tf.keras.layers.Dropout(0.4)(x)
-    x = tf.keras.layers.Dense(96, activation="relu", kernel_regularizer=L2)(x)
-    outputs = tf.keras.layers.Dense(len(config.CLASSES), activation="softmax")(x)
+    x = tf.keras.layers.Dropout(0.35)(x)
+    x = tf.keras.layers.Dense(128, activation="relu")(x)
 
-    model = tf.keras.Model(inputs, outputs)
-    loss = tf.keras.losses.CategoricalCrossentropy(label_smoothing=0.05)
-    model.compile(optimizer=tf.keras.optimizers.Adam(3e-4),
-                  loss=loss, metrics=["accuracy"])
+    # logits (niente softmax)
+    bias_init = None
+    if log_priors is not None:
+        bias_init = tf.keras.initializers.Constant(log_priors.tolist())
+    logits = tf.keras.layers.Dense(len(config.CLASSES), bias_initializer=bias_init)(x)
+
+    model = tf.keras.Model(inputs, logits)
+    opt  = tf.keras.optimizers.Adam(learning_rate=3e-4, clipnorm=1.0)
+    loss = tf.keras.losses.CategoricalCrossentropy(from_logits=True, label_smoothing=0.05)
+    model.compile(optimizer=opt, loss=loss, metrics=["accuracy"])
     return model

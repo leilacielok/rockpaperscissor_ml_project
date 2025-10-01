@@ -108,3 +108,11 @@ def load_external_test(cache: bool = True, batch_size: int = None, normalize: bo
     if cache:
         ds = ds.cache()
     return ds.prefetch(tf.data.AUTOTUNE)
+
+def compute_class_priors(ds, n_classes):
+    import numpy as np
+    counts = np.zeros(n_classes, dtype=np.int64)
+    for _, y in ds:
+        counts += y.numpy().sum(axis=0).astype(np.int64)
+    priors = counts / counts.sum()
+    return priors
