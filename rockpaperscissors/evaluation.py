@@ -20,6 +20,15 @@ def evaluate_on(ds, model, class_names):
     # temporary debug
     print("Unique y_true:", np.unique(y_true), "Unique y_pred:", np.unique(y_pred))
 
+    # temporary mini-check
+    probs_all = []
+    for x, y in ds:
+        p = model.predict(x, verbose=0)
+        probs_all.append(p)
+    probs_all = np.concatenate(probs_all)
+    print("val prob max (mean±std):", probs_all.max(axis=1).mean(), probs_all.max(axis=1).std())
+    print("val prob mean per classe:", probs_all.mean(axis=0))
+
     # explicit labels to avoid bugs
     labels = list(range(len(class_names)))
     report_txt = classification_report(
