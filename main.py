@@ -46,7 +46,7 @@ def train_and_report(model_name, model, train_ds, val_ds, file_paths_val):
     try:
         evaluation.show_misclassified(
             val_ds, model, file_paths_val, config.CLASSES,
-            top_n=12, outpath=f"reports/{model_name}_val_misclassified.png", pick="confident"
+            top_n=12, outpath=str(model_dir/"val_misclassified.png"), pick="confident"
         )
     except Exception as e:
         print("Impossible to generate misclassified grid:", e)
