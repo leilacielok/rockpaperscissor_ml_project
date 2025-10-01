@@ -3,8 +3,12 @@ from sklearn.metrics import classification_report, confusion_matrix
 from PIL import Image
 from pathlib import Path
 
+from pathlib import Path
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.metrics import classification_report, confusion_matrix
+
 def evaluate_on(ds, model, class_names):
-    loss, acc = model.evaluate(ds, verbose=0)
     y_true, y_pred = [], []
     for x, y in ds:
         probs = model.predict(x, verbose=0)
@@ -12,9 +16,22 @@ def evaluate_on(ds, model, class_names):
         y_true.append(np.argmax(y.numpy(), axis=1))
     y_true = np.concatenate(y_true)
     y_pred = np.concatenate(y_pred)
-    report_txt = classification_report(y_true, y_pred, target_names=class_names)
-    cm = confusion_matrix(y_true, y_pred)
+
+    # temporary debug
+    print("Unique y_true:", np.unique(y_true), "Unique y_pred:", np.unique(y_pred))
+
+    # explicit labels to avoid bugs
+    labels = list(range(len(class_names)))
+    report_txt = classification_report(
+        y_true, y_pred,
+        labels=labels,
+        target_names=class_names,
+        zero_division=0
+    )
+    cm = confusion_matrix(y_true, y_pred, labels=labels)
+    loss, acc = model.evaluate(ds, verbose=0)
     return {"loss": loss, "acc": acc, "report_txt": report_txt, "cm": cm}
+
 
 def plot_history(history, outdir="reports"):
     Path(outdir).mkdir(exist_ok=True)
@@ -37,7 +54,8 @@ def plot_confusion(cm, class_names, outpath="reports/confusion_matrix.png", titl
     Path(outpath).parent.mkdir(exist_ok=True, parents=True)
     plt.figure()
     plt.imshow(cm, interpolation="nearest", cmap="Blues")
-    plt.title(title); plt.colorbar()
+    plt.title(title)
+    plt.colorbar()
     ticks = np.arange(len(class_names))
     plt.xticks(ticks, class_names, rotation=45)
     plt.yticks(ticks, class_names)
@@ -46,6 +64,7 @@ def plot_confusion(cm, class_names, outpath="reports/confusion_matrix.png", titl
             plt.text(j, i, int(cm[i, j]), ha="center", va="center")
     plt.xlabel("Predicted"); plt.ylabel("True")
     plt.tight_layout(); plt.savefig(outpath, dpi=150, bbox_inches="tight"); plt.close()
+
 
 
 def save_report(report_txt, outpath="reports/classification_report.txt"):
@@ -89,3 +108,14 @@ def show_misclassified(ds, model, file_paths, class_names, top_n=12, outpath="re
         plt.title(f"T:{class_names[y_true[j]]} P:{class_names[y_pred[j]]} c:{conf[j]: .2f}")
     Path(outpath).parent.mkdir(exist_ok=True, parents=True)
     plt.tight_layout(); plt.savefig(outpath, dpi=150, bbox_inches="tight"); plt.close()
+
+
+# temporary debug function
+def print_class_histogram(ds):
+    import numpy as np
+    counts = None
+    for _, y in ds:
+        yt = np.argmax(y.numpy(), axis=1)
+        bins = np.bincount(yt, minlength=3)
+        counts = bins if counts is None else counts + bins
+    print("Validation class histogram:", counts)

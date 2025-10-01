@@ -47,7 +47,8 @@ def train_and_report(model_name, model, train_ds, val_ds, file_paths_val):
 
 def main():
     # Data
-    train_ds, val_ds, file_paths_val = data_utils.load_train_val(validation_split=0.2, augment=True)
+    train_ds, val_ds, file_paths_val = data_utils.load_train_val_stratified(validation_split=0.2, augment=True)
+    evaluation.print_class_histogram(val_ds)
 
     # === Four architectures ===
     results = []
