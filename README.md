@@ -151,3 +151,8 @@ The best configuration is saved and reported in `reports/summary.csv`.
 - Works on CPU, faster on GPU. 
 - Architectures C and D integrate residual connections, dropout, and label smoothing to improve generalization.
 
+-----
+> *Future Work suggestions*
+> - Extend dataset with more hand gestures;
+> - Test transfer learning with pretrained CNNs (MobileNet, ResNet, etc.);
+> - Deploy as a web app for interactive play.
