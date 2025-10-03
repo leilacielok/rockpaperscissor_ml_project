@@ -6,6 +6,7 @@
 
 This project implements **Convolutional Neural Networks (CNNs)** to classify images of hand gestures representing the **Rock–Paper–Scissors** game.  
 The codebase is designed to be **modular, reproducible, and extensible**, including data preprocessing, model architectures, training loops, evaluation metrics, and hyperparameter tuning.
+
 ---
 ## 📂 Project Structure
 ```
@@ -30,7 +31,12 @@ rockpaperscissor_ml_project/
 ---
 ## 🧹 Dataset Preparation, Cleaning & Splitting
 
-The dataset should follow this folder structure:
+The dataset is available on Kaggle:  
+👉 [Rock-Paper-Scissors Dataset](https://www.kaggle.com/datasets/drgfreeman/rockpaperscissors)
+
+Steps to prepare the dataset:
+1. Download the dataset from Kaggle.  
+2. Extract the archive into the `data/` folder so that the structure looks like this:  
 ```
 data/
 ├── rock/
