@@ -46,11 +46,12 @@ def model_a():
     x = tf.keras.layers.Dense(32, activation="relu")(x)      # small head
 
     outputs = tf.keras.layers.Dense(len(config.CLASSES), activation="softmax")(x)
+    loss = tf.keras.losses.CategoricalCrossentropy(label_smoothing=0.05)
 
     model = tf.keras.Model(inputs, outputs)
     model.compile(
         optimizer=tf.keras.optimizers.Adam(1e-3),
-        loss="categorical_crossentropy",
+        loss=loss,
         metrics=["accuracy"],
     )
     return model
@@ -67,8 +68,9 @@ def model_b():
         tf.keras.layers.Dense(32, activation="relu"),
         tf.keras.layers.Dense(len(config.CLASSES), activation="softmax"),
     ])
+    loss = tf.keras.losses.CategoricalCrossentropy(label_smoothing=0.05)
     model.compile(optimizer="adam",
-                  loss="categorical_crossentropy",
+                  loss=loss,
                   metrics=["accuracy"])
     return model
 
@@ -87,15 +89,20 @@ def model_c(log_priors=None):
     x = tf.keras.layers.Dropout(0.3)(x)
     x = tf.keras.layers.Dense(96, activation="relu")(x)
 
-    # logits
+    # probabilities
     bias_init = None
     if log_priors is not None:
         bias_init = tf.keras.initializers.Constant(log_priors.tolist())
-    logits = tf.keras.layers.Dense(len(config.CLASSES), bias_initializer=bias_init)(x)
+    outputs = tf.keras.layers.Dense(
+        len(config.CLASSES),
+        activation="softmax",
+        bias_initializer=bias_init,
+        name="probs"
+    )(x)
 
-    model = tf.keras.Model(inputs, logits)
+    model = tf.keras.Model(inputs, outputs)
     opt  = tf.keras.optimizers.Adam(learning_rate=3e-4, clipnorm=1.0)
-    loss = tf.keras.losses.CategoricalCrossentropy(from_logits=True, label_smoothing=0.05)
+    loss = tf.keras.losses.CategoricalCrossentropy(label_smoothing=0.05)
     model.compile(optimizer=opt, loss=loss, metrics=["accuracy"])
     return model
 
@@ -115,14 +122,19 @@ def model_d(log_priors=None):
     x = tf.keras.layers.Dropout(0.35)(x)
     x = tf.keras.layers.Dense(128, activation="relu")(x)
 
-    # logits (niente softmax)
+    # peobabilities
     bias_init = None
     if log_priors is not None:
         bias_init = tf.keras.initializers.Constant(log_priors.tolist())
-    logits = tf.keras.layers.Dense(len(config.CLASSES), bias_initializer=bias_init)(x)
+    outputs = tf.keras.layers.Dense(
+        len(config.CLASSES),
+        activation="softmax",
+        bias_initializer=bias_init,
+        name="probs"
+    )(x)
 
-    model = tf.keras.Model(inputs, logits)
+    model = tf.keras.Model(inputs, outputs)
     opt  = tf.keras.optimizers.Adam(learning_rate=3e-4, clipnorm=1.0)
-    loss = tf.keras.losses.CategoricalCrossentropy(from_logits=True, label_smoothing=0.05)
+    loss = tf.keras.losses.CategoricalCrossentropy(label_smoothing=0.05)
     model.compile(optimizer=opt, loss=loss, metrics=["accuracy"])
     return model

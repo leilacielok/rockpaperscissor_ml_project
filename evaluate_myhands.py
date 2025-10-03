@@ -2,6 +2,7 @@ import argparse
 import os
 from pathlib import Path
 import tensorflow as tf
+import numpy as np
 
 from rockpaperscissors import config, evaluation
 
@@ -17,7 +18,7 @@ def load_labeled_dir(root_dir, batch_size=None):
         batch_size=bs,
         label_mode="categorical",
         shuffle=False,
-        class_names=config.CLASSES,  # forza l'ordine coerente
+        class_names=config.CLASSES,
     )
     file_paths = ds_raw.file_paths
     norm = tf.keras.layers.Rescaling(1.0/255.0)
@@ -32,12 +33,34 @@ def main(model_path: str, data_dir: str, outdir: str):
     print(f"📁 Evaluating on labeled folder: {data_dir}")
     ds, file_paths = load_labeled_dir(data_dir)
 
-    # Valutazione e metriche
+    # Metrics and evaluation
     res = evaluation.evaluate_on(ds, model, config.CLASSES)
     print(f"\nAccuracy: {res['acc']:.4f}\n")
     print(res["report_txt"])
 
-    # Salvataggi
+    # raccogliamo probs e y_true per analisi
+    probs_all, ytrue_all = [], []
+    for xb, yb in ds:
+        p = model.predict(xb, verbose=0)
+        probs_all.append(p)
+        ytrue_all.append(yb.numpy())
+    probs = np.concatenate(probs_all, axis=0)
+    y_true = np.argmax(np.concatenate(ytrue_all, axis=0), axis=1)
+    y_pred = np.argmax(probs, axis=1)
+
+    print("Unique y_true:", np.unique(y_true), "Unique y_pred:", np.unique(y_pred))
+    print("Pred distrib (counts):", np.bincount(y_pred, minlength=len(config.CLASSES)))
+    print("True  distrib (counts):", np.bincount(y_true, minlength=len(config.CLASSES)))
+    print("Mean prob per class:", probs.mean(axis=0))
+    print("Max prob (mean±std):", probs.max(axis=1).mean(), probs.max(axis=1).std())
+
+    # Mostra le 5 immagini più 'scissors' secondo il modello
+    top_sc_idx = np.argsort(probs[:, config.CLASSES.index("scissors")])[::-1][:5]
+    print("\nTop-5 'scissors' prob:")
+    for i in top_sc_idx:
+        print(f"{file_paths[i]}  ->  probs={probs[i]}")
+
+   # Savings
     _ensure_dir(outdir)
     report_path = os.path.join(outdir, "custom_classification_report.txt")
     cm_path = os.path.join(outdir, "custom_confusion_matrix.png")
@@ -46,9 +69,8 @@ def main(model_path: str, data_dir: str, outdir: str):
     print(f"✅ Saved report to {report_path}")
     print(f"✅ Saved confusion matrix to {cm_path}")
 
-    # Griglia dei misclassificati (se disponibile la funzione compatibile)
+    # Misclassified
     try:
-        # Alcune versioni della tua funzione hanno param 'pick'; se non c'è, ignora.
         try:
             evaluation.show_misclassified(
                 ds, model, file_paths, config.CLASSES,
