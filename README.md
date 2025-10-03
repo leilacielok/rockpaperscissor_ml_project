@@ -145,7 +145,7 @@ The best configuration is saved and reported in `reports/summary.csv`.
    - Confusion matrices, learning curves, misclassified samples
 
 --- 
-✨ Notes
+✨ **Notes**
 
 - Models are reproducible with ```config.SEED```. 
 - Works on CPU, faster on GPU. 
