@@ -103,6 +103,26 @@ All models use:
    - Training curves (loss & accuracy)  
    - Grids of **most confident misclassified images**  
 
+   **Optional: Generalization Test with custom images**
+   To further evaluate the **generalization capability** of the models, we tested them on a **custom dataset** of hand gesture photos (our own hands performing rock, paper, and scissors).
+   The images were organized into subfolders:
+   ```
+   my_hands/
+   ├── rock/
+   ├── paper/
+   └── scissors/
+   ```
+   This allows the model to compare its predictions against the **true labels** (derived from the folder structure).
+   Run the evaluation with:
+
+   ```bash
+   python evaluate_custom.py --model models/model_d.keras --dir my_hands --outdir reports/custom_eval_myhands
+   ```
+   This generates:
+   - custom_classification_report.txt → precision, recall, f1-score 
+   - custom_confusion_matrix.png → confusion matrix on the custom dataset 
+   - custom_misclassified.png → a grid of misclassified examples (if any)
+
 ---
 
 ## 🔍 Hyperparameter Tuning
