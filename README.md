@@ -145,6 +145,33 @@ The best configuration is saved and reported in `reports/summary.csv`.
    - Confusion matrices, learning curves, misclassified samples
 
 --- 
+---
+
+## 🗂️ Model Files (`.keras`)
+
+The trained models are saved in the `.keras` format (introduced in Keras 3).  
+Each file contains:
+
+- the **architecture** (layers, activations, etc.)  
+- the **trained weights**  
+- the **optimizer state** (useful to resume training)  
+
+These files are **binary** and cannot be previewed on GitHub, but can be reloaded in Python.
+
+### Inspecting a Model
+
+To explore a saved model (summary, parameters, validation accuracy, reports):
+
+```bash
+python inspect_model.py models/model_a.keras
+```
+This will output:
+- Model summary (layers & parameters)
+- Number of trainable parameters 
+- Validation performance (accuracy, precision, recall, f1-score)
+- Classification report 
+- Confusion matrix saved under ```/reports/inspect_confusion_matrix.png```
+---
 ✨ **Notes**
 
 - Models are reproducible with ```config.SEED```. 
