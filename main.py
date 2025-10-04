@@ -1,3 +1,5 @@
+import os
+os.environ["TF_ENABLE_ONEDNN_OPTS"] = "0"
 from rockpaperscissors import config, data_utils, architectures, training, evaluation
 import numpy as np, tensorflow as tf, random, os
 from pathlib import Path
@@ -76,7 +78,7 @@ def main():
 
     # Four architectures
     results = []
-    for name, builder in models_to_try:   # ← usa questa, non riscrivere la lista
+    for name, builder in models_to_try:
         tf.keras.backend.clear_session()
         acc, runtime, n_params, best_vloss = train_and_report(
             name, builder(), train_ds, val_ds, file_paths_val
