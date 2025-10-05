@@ -7,8 +7,8 @@ def make_callbacks(checkpoint_path="models/best.keras"):
     return [
         tf.keras.callbacks.EarlyStopping(
             monitor="val_accuracy", mode="max",
-            patience=6, min_delta=1e-3, restore_best_weights=True
-        ),
+            patience=10, min_delta=1e-3, restore_best_weights=True
+        ),  # pazienza aumentata a 10
         tf.keras.callbacks.ReduceLROnPlateau(
             monitor="val_loss", patience=2, factor=0.5, min_lr=1e-5, cooldown=1
         ),
@@ -22,7 +22,7 @@ def train(model, train_ds, val_ds, epochs=30, callbacks=None, learning_rate=3e-4
     if getattr(model, "optimizer", None) is None:
         model.compile(
             optimizer=tf.keras.optimizers.Adam(learning_rate=learning_rate),
-            loss=tf.keras.losses.CategoricalCrossentropy(label_smoothing=0.0),
+            loss=tf.keras.losses.CategoricalCrossentropy(label_smoothing=0.05),  # abilitato label smoothing (5%)
             metrics=["accuracy"],
         )
     t0 = perf_counter()
@@ -32,5 +32,3 @@ def train(model, train_ds, val_ds, epochs=30, callbacks=None, learning_rate=3e-4
     )
     runtime = perf_counter() - t0
     return history, runtime
-
-

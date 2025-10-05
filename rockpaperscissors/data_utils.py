@@ -138,7 +138,6 @@ def load_train_val_stratified(
     file_paths_val = list(f_val)
     return ds_train, ds_val, file_paths_val
 
-
 def load_external_test(cache: bool = True, batch_size: int | None = None):
     """
     Carica un test esterno (sottocartelle = nomi classe).
@@ -165,10 +164,10 @@ def load_external_test(cache: bool = True, batch_size: int | None = None):
         ds = ds.cache()
     return ds.prefetch(AUTOTUNE)
 
-
 def compute_class_priors(ds, n_classes):
     counts = np.zeros(n_classes, dtype=np.int64)
     for _, y in ds:
         counts += y.numpy().sum(axis=0).astype(np.int64)
     priors = counts / max(1, counts.sum())
     return priors
+

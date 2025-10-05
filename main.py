@@ -1,5 +1,6 @@
 import os
 os.environ["TF_ENABLE_ONEDNN_OPTS"] = "0"
+
 from rockpaperscissors import config, data_utils, architectures, training, evaluation
 import numpy as np, tensorflow as tf, random, os
 from pathlib import Path
@@ -15,13 +16,15 @@ Path("models").mkdir(exist_ok=True); Path("reports").mkdir(exist_ok=True)
 def train_and_report(model_name, model, train_ds, val_ds, file_paths_val):
     model.summary()
 
+    ckpt_path = f"models/{model_name}_best.keras"
     history, runtime = training.train(
         model, train_ds, val_ds, epochs=30,
-        callbacks=training.make_callbacks(checkpoint_path=f"models/{model_name}_best.keras")
+        callbacks=training.make_callbacks(checkpoint_path=ckpt_path)
     )
     print(f"Total training time: {runtime:.1f}s | Avg/epoch: {runtime/len(history.history['loss']):.2f}s")
-    best_epoch = 1 + int(np.argmin(history.history["val_loss"]))
-    print(f"Early stopped at epoch {best_epoch} (best val_loss={min(history.history['val_loss']):.4f})")
+    best_epoch = 1 + int(np.argmin(history.history.get('val_loss', history.history['loss'])))
+    best_vloss = float(min(history.history.get('val_loss', [np.inf])))
+    print(f"Early stopped at epoch {best_epoch} (best val_loss={best_vloss:.4f})")
     model.save(f"models/{model_name}.keras")
 
     # folder for reports
@@ -54,7 +57,7 @@ def train_and_report(model_name, model, train_ds, val_ds, file_paths_val):
         print("Impossible to generate misclassified grid:", e)
 
     n_params = model.count_params()
-    return res_val['acc'], runtime, n_params, float(min(history.history["val_loss"]))
+    return res_val['acc'], runtime, n_params, best_vloss
 
 
 def main():
@@ -73,7 +76,6 @@ def main():
         ("model_a", architectures.model_a),
         ("model_b", architectures.model_b),
         ("model_c", lambda: architectures.model_c(log_priors)),
-        ("model_d", lambda: architectures.model_d(log_priors)),
     ]
 
     # Four architectures
@@ -117,28 +119,20 @@ def main():
 if __name__ == "__main__":
     main()
 
-    # change in True only if needed
+    # ====== HYPERPARAMETER TUNING + FINAL TRAINING ======
+    from rockpaperscissors.tuning import run_tuning, run_final_training
+
     RUN_TUNING = False
     if RUN_TUNING:
+        best = run_tuning(
+            model_names=("model_a","model_b","model_c"),
+            epochs=20,
+            # steps_train=100, steps_val=30,  # opzionale per tuning più rapido
+        )
 
-        # Hyperparameter tuning
-        search_space = {
-            "lr": [1e-3, 5e-4, 3e-4],
-            "batch": [16, 32],
-            "augment": [True, False],
-        }
-        best = None
-        for lr, batch, aug in product(search_space["lr"], search_space["batch"], search_space["augment"]):
-            print(f"\n=== Trying lr={lr}, batch={batch}, augment={aug} ===")
-            # load data with the parameters
-            train_ds, val_ds, _ = data_utils.load_train_val_stratified(validation_split=0.2, augment=aug, batch_size=batch)
-            model = architectures.model_a()
-            model.optimizer.learning_rate = lr
-
-            history, runtime = training.train(model, train_ds, val_ds, epochs=20)
-            val_acc = max(history.history["val_accuracy"])
-            cand = {"lr": lr, "batch": batch, "augment": aug, "val_acc": float(val_acc)}
-            if best is None or val_acc > best["val_acc"]:
-                best = cand
-            print("Current best:", best)
-        print("=== BEST CONFIG ===", best)
+        # Training finale "pulito" sul best trovato
+        run_final_training(
+            best,
+            epochs=50,
+            checkpoint_path="models/final_best.keras",
+        )
