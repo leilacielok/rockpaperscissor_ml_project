@@ -1,58 +1,31 @@
 import tensorflow as tf
 from rockpaperscissors import config
 
-def ln_relu(x, axis=(-1,)):
-    x = tf.keras.layers.LayerNormalization(axis=axis)(x)
-    return tf.keras.layers.ReLU()(x)
+def conv_ln_act(x, filters, k=3, s=1, act=True):
+    x = tf.keras.layers.Conv2D(filters, k, strides=s, padding="same", use_bias=False,
+                               kernel_initializer=tf.keras.initializers.HeNormal())(x)
+    x = tf.keras.layers.LayerNormalization(axis=-1, epsilon=1e-5)(x)  # LN al posto di BN
+    if act:
+        x = tf.keras.layers.ReLU()(x)
+    return x
 
-def sep_block_ln(x, filters, sd_rate=0.0):
-    y = ln_relu(x)
-    y = tf.keras.layers.SeparableConv2D(filters, 3, padding="same", use_bias=False, depthwise_initializer=tf.keras.initializers.HeNormal(), pointwise_initializer=tf.keras.initializers.HeNormal())(y)  # inizializzazione HeNormal dei pesi
-    if sd_rate > 0:
-        y = tf.keras.layers.SpatialDropout2D(sd_rate)(y)  # aggiunta di dropout spaziale per ridurre overfitting e collasso
+def dws_ln_act(x, filters, s=1):
+    # Depthwise 3x3 + LN + ReLU → Pointwise 1x1 + LN + ReLU
+    y = tf.keras.layers.DepthwiseConv2D(3, strides=s, padding="same", use_bias=False,
+                                        depthwise_initializer=tf.keras.initializers.HeNormal())(x)
+    y = tf.keras.layers.LayerNormalization(axis=-1, epsilon=1e-5)(y)
+    y = tf.keras.layers.ReLU()(y)
+    y = tf.keras.layers.Conv2D(filters, 1, padding="same", use_bias=False,
+                               kernel_initializer=tf.keras.initializers.HeNormal())(y)
+    y = tf.keras.layers.LayerNormalization(axis=-1, epsilon=1e-5)(y)
+    y = tf.keras.layers.ReLU()(y)
     return y
 
-def residual_sep_block_ln(x, filters, downsample=False, sd_rate=0.1):
-    shortcut = x
-    y = sep_block_ln(x, filters, sd_rate=sd_rate)
-    y = sep_block_ln(y, filters, sd_rate=sd_rate)
-
-    if downsample:
-        y = tf.keras.layers.MaxPool2D()(y)
-        shortcut = tf.keras.layers.MaxPool2D()(shortcut)
-    if shortcut.shape[-1] != filters:
-        s = ln_relu(shortcut)
-        shortcut = tf.keras.layers.Conv2D(filters, 1, padding="same", use_bias=False, kernel_initializer=tf.keras.initializers.HeNormal())(s)
-
-    out = tf.keras.layers.Add()([shortcut, y])
-    return out
-
-## Helper functions and blocks (using LayerNorm, HeNormal init, etc.)
-def mb_sep_block(x, filters, stride=1, sd_rate=0.0):
-    """Depthwise separable conv block con LayerNorm e ReLU.
-    (DepthwiseConv → LayerNorm → ReLU → PointwiseConv → LayerNorm → ReLU, con SpatialDropout2D opzionale)"""
-    y = tf.keras.layers.DepthwiseConv2D(3, strides=stride, padding="same", use_bias=False, depthwise_initializer=tf.keras.initializers.HeNormal())(x)  # inizializzazione HeNormal dei pesi
-    y = tf.keras.layers.LayerNormalization(axis=-1)(y)  # LayerNorm al posto di BatchNorm
-    y = tf.keras.layers.ReLU()(y)  # ReLU standard (invece di ReLU6)
-    y = tf.keras.layers.Conv2D(filters, 1, padding="same", use_bias=False, kernel_initializer=tf.keras.initializers.HeNormal())(y)  # inizializzazione HeNormal dei pesi
-    y = tf.keras.layers.LayerNormalization(axis=-1)(y)  # LayerNorm al posto di BatchNorm
-    y = tf.keras.layers.ReLU()(y)  # ReLU standard (invece di ReLU6)
-    if sd_rate > 0:
-        y = tf.keras.layers.SpatialDropout2D(sd_rate)(y)  # aggiunta di dropout spaziale per ridurre overfitting e collasso
+def dws_res_block_ln(x, filters, s=1):
+    y = dws_ln_act(x, filters, s=s)
+    if s == 1 and x.shape[-1] == filters:
+        y = tf.keras.layers.Add()([x, y])
     return y
-
-def mb_res_block(x, filters, stride=1, sd_rate=0.0):
-    """Residual con proiezione quando serve (stride!=1 o canali diversi). Usa LayerNorm invece di BatchNorm,
-    supporta SpatialDropout2D per regolarizzazione."""
-    y = mb_sep_block(x, filters, stride=stride, sd_rate=sd_rate)
-    if stride != 1 or x.shape[-1] != filters:
-        shortcut = tf.keras.layers.Conv2D(filters, 1, strides=stride, padding="same", use_bias=False, kernel_initializer=tf.keras.initializers.HeNormal())(x)  # inizializzazione HeNormal dei pesi
-        shortcut = tf.keras.layers.LayerNormalization(axis=-1)(shortcut)  # LayerNorm sul shortcut
-    else:
-        shortcut = x
-    out = tf.keras.layers.Add()([shortcut, y])
-    out = tf.keras.layers.ReLU()(out)  # ReLU standard (invece di ReLU6 per maggiore dinamica)
-    return out
 
 # ------------------ MODELS --------------------- #
 def model_a():
@@ -105,30 +78,46 @@ def model_c(log_priors=None):
     input_shape = getattr(config, "IMG_SHAPE", (img_size, img_size, 3))
     n_classes   = len(getattr(config, "CLASSES", ["rock", "paper", "scissors"]))
 
-    width_mult = 1.0
     inputs = tf.keras.Input(shape=input_shape)
 
-    x = tf.keras.layers.Conv2D(int(24 * width_mult), 3, strides=2, padding="same", use_bias=False, kernel_initializer=tf.keras.initializers.HeNormal())(inputs)  # inizializzazione HeNormal dei pesi
-    x = tf.keras.layers.LayerNormalization(axis=-1)(x)  # LayerNorm al posto di BatchNorm
-    x = tf.keras.layers.ReLU()(x)  # ReLU standard (invece di ReLU6 per maggiore dinamica)
+    # Stem (↓/2 → 48x48)
+    x = conv_ln_act(inputs, 24, k=3, s=2)
 
-    # blocchi MobileNet v1 "plain" (niente residuo)
-    for f, s in [(24, 1), (32, 2), (48, 1), (64, 2), (64, 1), (96, 1)]:
-        x = mb_sep_block(x, int(f * width_mult), stride=s, sd_rate=0.1)
+    # Stage 1 (48x48)
+    x = dws_res_block_ln(x, 32, s=1)
+    x = dws_res_block_ln(x, 32, s=1)
 
+    # Downsample (↓/2 → 24x24)
+    x = dws_ln_act(x, 48, s=2)
+    x = dws_res_block_ln(x, 48, s=1)
+    x = dws_res_block_ln(x, 48, s=1)
+
+    # Downsample (↓/2 → 12x12)
+    x = dws_ln_act(x, 64, s=2)
+    x = dws_res_block_ln(x, 64, s=1)
+    x = dws_res_block_ln(x, 64, s=1)
+    x = dws_res_block_ln(x, 64, s=1)
+
+    # Bottleneck
+    x = conv_ln_act(x, 96, k=1, s=1)
+
+    # Head
     x = tf.keras.layers.GlobalAveragePooling2D()(x)
-    x = tf.keras.layers.Dropout(0.25)(x)
-    x = tf.keras.layers.Dense(64, activation="relu", kernel_initializer=tf.keras.initializers.HeNormal())(x)  # inizializzazione HeNormal dei pesi
+    x = tf.keras.layers.Dense(96, activation="relu",
+                              kernel_initializer=tf.keras.initializers.HeNormal())(x)
     x = tf.keras.layers.Dropout(0.2)(x)
 
     bias_init = (tf.keras.initializers.Constant(log_priors) if log_priors is not None else "zeros")
-    outputs = tf.keras.layers.Dense(n_classes, activation="softmax", bias_initializer=bias_init, kernel_initializer=tf.keras.initializers.HeNormal())(x)  # inizializzazione HeNormal dei pesi
+    outputs = tf.keras.layers.Dense(
+        n_classes, activation="softmax",
+        bias_initializer=bias_init,
+        kernel_initializer=tf.keras.initializers.HeNormal()
+    )(x)
 
-    model = tf.keras.Model(inputs, outputs, name="model_d")
-    model.compile(
-        optimizer=tf.keras.optimizers.Adam(3e-4),  # learning rate ridotto a 3e-4
-        loss=tf.keras.losses.CategoricalCrossentropy(label_smoothing=0.05),  # abilitato label smoothing 5%
-        metrics=["accuracy"],
-    )
+    model = tf.keras.Model(inputs, outputs, name="model_c")
+
+    loss = tf.keras.losses.CategoricalCrossentropy(label_smoothing=0.05)
+    # LR più basso per evitare “saturazione” precoce
+    model.compile(optimizer=tf.keras.optimizers.Adam(3e-4),
+                  loss=loss, metrics=["accuracy"])
     return model
-
