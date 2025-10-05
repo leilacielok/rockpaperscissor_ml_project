@@ -7,10 +7,10 @@ def make_callbacks(checkpoint_path="models/best.keras"):
     return [
         tf.keras.callbacks.EarlyStopping(
             monitor="val_accuracy", mode="max",
-            patience=5, min_delta=1e-3, restore_best_weights=True
+            patience=6, min_delta=1e-3, restore_best_weights=True
         ),
         tf.keras.callbacks.ReduceLROnPlateau(
-            monitor="val_loss", patience=2, factor=0.5, min_lr=1e-5
+            monitor="val_loss", patience=2, factor=0.5, min_lr=1e-5, cooldown=1
         ),
         # save best as val accuracy
         tf.keras.callbacks.ModelCheckpoint(

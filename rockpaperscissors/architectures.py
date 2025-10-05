@@ -32,29 +32,29 @@ def bn_relu(x):
     x = tf.keras.layers.BatchNormalization()(x)
     return tf.keras.layers.ReLU(max_value=6.0)(x)
 
-def sep_block_bn(x, filters, stride=1, sd_rate=0.0):
-    y = bn_relu(x)
-    y = tf.keras.layers.DepthwiseConv2D(
-        3, strides=stride, padding="same", use_bias=False
-    )(y)
+def mb_sep_block(x, filters, stride=1):
+    """Depthwise separable conv (MobileNet v1): DW→BN→ReLU6→PW→BN→ReLU6."""
+    y = tf.keras.layers.DepthwiseConv2D(3, strides=stride, padding="same", use_bias=False)(x)
     y = tf.keras.layers.BatchNormalization()(y)
     y = tf.keras.layers.ReLU(max_value=6.0)(y)
+
     y = tf.keras.layers.Conv2D(filters, 1, padding="same", use_bias=False)(y)
-    if sd_rate > 0:
-        y = tf.keras.layers.SpatialDropout2D(sd_rate)(y)
+    y = tf.keras.layers.BatchNormalization()(y)
+    y = tf.keras.layers.ReLU(max_value=6.0)(y)
     return y
 
-def residual_sep_block_fast(x, filters, downsample=False, sd_rate=0.0):
-    stride = 2 if downsample else 1
-    y = sep_block_bn(x, filters, stride=stride, sd_rate=sd_rate)
-    shortcut = x
-    if downsample or x.shape[-1] != filters:
-        shortcut = tf.keras.layers.Conv2D(
-            filters, 1, strides=stride, padding="same", use_bias=False
-        )(shortcut)
+def mb_res_block(x, filters, stride=1):
+    """Residual con proiezione quando serve (stride!=1 o canali diversi)."""
+    y = mb_sep_block(x, filters, stride=stride)
+    if stride != 1 or x.shape[-1] != filters:
+        shortcut = tf.keras.layers.Conv2D(filters, 1, strides=stride, padding="same", use_bias=False)(x)
         shortcut = tf.keras.layers.BatchNormalization()(shortcut)
+    else:
+        shortcut = x
+    out = tf.keras.layers.Add()([shortcut, y])
+    out = tf.keras.layers.ReLU(max_value=6.0)(out)
+    return out
 
-    return tf.keras.layers.Add()([shortcut, y])
 
 # ------------------ MODELS --------------------- #
 def model_a():
@@ -110,40 +110,30 @@ def model_c(log_priors=None):
     width_mult = 1.0
     inputs = tf.keras.Input(shape=input_shape)
 
-    # Normalization + Augment
-    x = tf.keras.layers.Rescaling(1./255)(inputs)
-    aug = tf.keras.Sequential([
-        tf.keras.layers.RandomFlip("horizontal"),
-        tf.keras.layers.RandomRotation(0.08),
-        tf.keras.layers.RandomZoom(0.1),
-    ], name="aug")
-    x = aug(x)
-
     # stem
-    x = tf.keras.layers.Conv2D(int(16 * width_mult), 3, strides=2, padding="same", use_bias=False)(x)
+    x = tf.keras.layers.Conv2D(int(16 * width_mult), 3, strides=2, padding="same", use_bias=False)(inputs)
     x = tf.keras.layers.BatchNormalization()(x)
     x = tf.keras.layers.ReLU(max_value=6.0)(x)
 
-    # 3 steps
-    for filters, down in [(24, False), (32, True), (64, True)]:
-        f = int(filters * width_mult)
-        x = residual_sep_block_fast(x, f, downsample=down, sd_rate=0.0)
-        x = residual_sep_block_fast(x, f, downsample=False, sd_rate=0.0)
+    # stadi MobileNet v1 con residuo (2 blocchi per stadio)
+    for f, stride in [(24, 1), (24, 1), (32, 2), (32, 1), (64, 2), (64, 1)]:
+        x = mb_res_block(x, int(f * width_mult), stride=stride)
 
     x = tf.keras.layers.GlobalAveragePooling2D()(x)
-    x = tf.keras.layers.Dropout(0.3)(x)
+    x = tf.keras.layers.Dropout(0.25)(x)
     x = tf.keras.layers.Dense(64, activation="relu")(x)
     x = tf.keras.layers.Dropout(0.2)(x)
 
-    outputs = tf.keras.layers.Dense(n_classes, activation="softmax")(x)
+    bias_init = (tf.keras.initializers.Constant(log_priors) if log_priors is not None else "zeros")
+    outputs = tf.keras.layers.Dense(n_classes, activation="softmax", bias_initializer=bias_init)(x)
 
     model = tf.keras.Model(inputs, outputs, name="model_c")
-    model.compile(optimizer=tf.keras.optimizers.Adam(3e-4),
-                  loss=tf.keras.losses.CategoricalCrossentropy(label_smoothing=0.0),
-                  metrics=["accuracy"])
+    model.compile(
+        optimizer=tf.keras.optimizers.Adam(1e-3),  # LR un po' più alto aiuta con BN
+        loss=tf.keras.losses.CategoricalCrossentropy(label_smoothing=0.0),
+        metrics=["accuracy"],
+    )
     return model
-
-
 
 
 
@@ -155,38 +145,28 @@ def model_d(log_priors=None):
     width_mult = 1.0
     inputs = tf.keras.Input(shape=input_shape)
 
-    x = tf.keras.layers.Rescaling(1./255)(inputs)
-    aug = tf.keras.Sequential([
-        tf.keras.layers.RandomFlip("horizontal"),
-        tf.keras.layers.RandomRotation(0.08),
-        tf.keras.layers.RandomZoom(0.1),
-    ], name="aug")
-    x = aug(x)
-
-    x = tf.keras.layers.Conv2D(int(24 * width_mult), 3, strides=2, padding="same", use_bias=False)(x)
+    x = tf.keras.layers.Conv2D(int(24 * width_mult), 3, strides=2, padding="same", use_bias=False)(inputs)
     x = tf.keras.layers.BatchNormalization()(x)
     x = tf.keras.layers.ReLU(max_value=6.0)(x)
 
-    for filters, stride in [
-        (int(24 * width_mult), 1),
-        (int(32 * width_mult), 2),
-        (int(48 * width_mult), 1),
-        (int(64 * width_mult), 2),
-        (int(64 * width_mult), 1),
-    ]:
-        x = sep_block_bn(x, filters, stride=stride, sd_rate=0.0)
+    # blocchi MobileNet v1 "plain" (niente residuo)
+    for f, s in [(24, 1), (32, 2), (48, 1), (64, 2), (64, 1), (96, 1)]:
+        x = mb_sep_block(x, int(f * width_mult), stride=s)
 
     x = tf.keras.layers.GlobalAveragePooling2D()(x)
-    x = tf.keras.layers.Dropout(0.3)(x)
+    x = tf.keras.layers.Dropout(0.25)(x)
     x = tf.keras.layers.Dense(64, activation="relu")(x)
     x = tf.keras.layers.Dropout(0.2)(x)
 
-    outputs = tf.keras.layers.Dense(n_classes, activation="softmax")(x)
+    bias_init = (tf.keras.initializers.Constant(log_priors) if log_priors is not None else "zeros")
+    outputs = tf.keras.layers.Dense(n_classes, activation="softmax", bias_initializer=bias_init)(x)
 
     model = tf.keras.Model(inputs, outputs, name="model_d")
-    model.compile(optimizer=tf.keras.optimizers.Adam(3e-4),
-                  loss=tf.keras.losses.CategoricalCrossentropy(label_smoothing=0.0),
-                  metrics=["accuracy"])
+    model.compile(
+        optimizer=tf.keras.optimizers.Adam(1e-3),
+        loss=tf.keras.losses.CategoricalCrossentropy(label_smoothing=0.0),
+        metrics=["accuracy"],
+    )
     return model
 
 
