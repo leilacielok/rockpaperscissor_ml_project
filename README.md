@@ -127,14 +127,33 @@ All models use:
 
 ## 🔍 Hyperparameter Tuning
 
-At the end of `main.py`, a **grid search** is implemented to optimize:
-- **Learning rate**: `[1e-3, 5e-4, 3e-4]`  
-- **Batch size**: `[16, 32]`  
-- **Data augmentation**: `[True, False]`  
+Tuning is handled via `rockpaperscissors/tuning.py`.
 
-The script tests all combinations, logs validation accuracy, and prints the **best configuration**.
-The best configuration is saved and reported in `reports/summary.csv`.
+### Option A — Run from CLI
+**`CLI` example**
+```bash
+# Model C only, 12 epochs
+python -m rockpaperscissors.tuning --models c --epochs 12
 
+# Models B and C, fast preset, limited steps per trial
+python -m rockpaperscissors.tuning --models b,c --fast --steps-train 120 --steps-val 40
+```
+### Option B — Run from `main.py` via config
+
+Enable tuning from your project’s `config.py`, then run `main.py`. The main will short-circuit into the tuner and stop after the final training of the best config.
+
+**`config.py` example**
+```python
+TUNING = True                     # enable tuning path
+TUNING_MODELS = "c"               # e.g., "b,c" or ["a","b","c"]
+TUNING_EPOCHS = 12                # default 20 (or 10 if TUNING_FAST=True)
+TUNING_FAST = False               # optional shortcut: if True and TUNING_EPOCHS not set, uses 10
+TUNING_STEPS_TRAIN = None         # e.g., 120 to speed up each trial
+TUNING_STEPS_VAL = None           # e.g., 40
+FINAL_EPOCHS = 50                 # epochs for final training on the best model
+# Optional: skip the search and train directly the first selected model
+NO_TUNING = False                 # set True to skip tuning
+```
 ---
 
 ## ▶️ How to Run
