@@ -53,7 +53,7 @@ data/
 - An **external test set** can optionally be added in `data/rps-cv-images/`.
 
 ### Cleaning
-- Images are automatically resized to `(128, 128)` pixels.  
+- Images are automatically resized to **(IMG_SIZE, IMG_SIZE)** as defined in `config.py` (`96×96`)  
 - Pixel values are normalized in `[0, 1]`.  
 - Label encoding is handled by TensorFlow’s `image_dataset_from_directory`.
 
