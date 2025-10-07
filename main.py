@@ -1,8 +1,8 @@
 import os
 os.environ["TF_ENABLE_ONEDNN_OPTS"] = "0"
 
-from rockpaperscissors import config, data_utils, architectures, training, evaluation
-import numpy as np, tensorflow as tf, random, os
+from rockpaperscissors import config, tuning, data_utils, architectures, training, evaluation
+import numpy as np, tensorflow as tf, random
 from pathlib import Path
 from itertools import product
 import csv
@@ -61,6 +61,10 @@ def train_and_report(model_name, model, train_ds, val_ds, file_paths_val):
 
 
 def main():
+    # tuning
+    if getattr(config, "TUNING", False):
+        tuning.run_from_config()
+        raise SystemExit(0)
     # Data
     train_ds, val_ds, file_paths_val = data_utils.load_train_val_stratified(
         validation_split=0.2, augment=True
@@ -115,24 +119,5 @@ def main():
     except Exception as e:
         print("No external test set found:", e)
 
-
 if __name__ == "__main__":
     main()
-
-    # ====== HYPERPARAMETER TUNING + FINAL TRAINING ======
-    from rockpaperscissors.tuning import run_tuning, run_final_training
-
-    RUN_TUNING = False
-    if RUN_TUNING:
-        best = run_tuning(
-            model_names=("model_a","model_b","model_c"),
-            epochs=20,
-            # steps_train=100, steps_val=30,  # opzionale per tuning più rapido
-        )
-
-        # Training finale "pulito" sul best trovato
-        run_final_training(
-            best,
-            epochs=50,
-            checkpoint_path="models/final_best.keras",
-        )
