@@ -19,7 +19,7 @@ rockpaperscissor_ml_project/
 │   ├── evaluation.py                   # Evaluation metrics, confusion matrices, misclassified samples
 │   ├── training.py                     # Training loop and callbacks
 │   ├── tuning.py                       # Hyperparameter tuning (CLI + run_from_config used by main.py)
-│   └── __init__.py                     # (or init.py if that’s what you use)
+│   └── __init__.py                     
 │
 ├── notebooks/                          # EDA
 ├── main.py                             # Main script to train, evaluate, and generate reports
@@ -29,7 +29,7 @@ rockpaperscissor_ml_project/
 ├── models/                             # Saved trained models (.keras)
 ├── inspect_model.py                    # (Utility) Model inspection / summaries / parameter counts
 ├── evaluate_myhands.py                 # (Utility) Evaluate on custom “my hands” images
-└── requirements.txt                    # (or requirements.py if that’s your file)
+└── requirements.txt                    
 
 ```
 
