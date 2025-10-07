@@ -21,7 +21,7 @@ rockpaperscissor_ml_project/
 │   ├── tuning.py                       # Hyperparameter tuning (CLI + run_from_config used by main.py)
 │   └── __init__.py                     
 │
-├── notebooks/                          # EDA
+├── analysis/                           # Explanatory Data Analysis
 ├── main.py                             # Main script to train, evaluate, and generate reports
 │
 ├── data/                               # Dataset (rock/, paper/, scissors/)
