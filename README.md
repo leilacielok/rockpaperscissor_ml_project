@@ -12,20 +12,25 @@ The codebase is designed to be **modular, reproducible, and extensible**, includ
 ```
 rockpaperscissor_ml_project/
 │
-├── rockpaperscissors/ # Core package
-│ ├── architectures.py # CNN architectures (A, B, C, D)
-│ ├── config.py # Global config (image size, batch size, seed, class names)
-│ ├── data_utils.py # Data loading, cleaning, preprocessing, augmentation
-│ ├── evaluation.py # Evaluation metrics, confusion matrices, misclassified samples
-│ ├── training.py # Training loop and callbacks
-│ └── init.py
+├── rockpaperscissors/                  # Core package
+│   ├── architectures.py                # CNN architectures (A, B, C)
+│   ├── config.py                       # Global config (image size, batch size, seed, class names, tuning flags)
+│   ├── data_utils.py                   # Data loading, cleaning, preprocessing, augmentation
+│   ├── evaluation.py                   # Evaluation metrics, confusion matrices, misclassified samples
+│   ├── training.py                     # Training loop and callbacks
+│   ├── tuning.py                       # Hyperparameter tuning (CLI + run_from_config used by main.py)
+│   └── __init__.py                     # (or init.py if that’s what you use)
 │
-├── notebooks/ # (Optional) Jupyter notebooks for EDA
-├── main.py # Main script to train, evaluate, and generate reports
+├── notebooks/                          # EDA
+├── main.py                             # Main script to train, evaluate, and generate reports
 │
-├── data/ # Dataset (rock/, paper/, scissors/)
-├── reports/ # Plots, classification reports, confusion matrices
-└── models/ # Saved trained models (.keras)
+├── data/                               # Dataset (rock/, paper/, scissors/)
+├── reports/                            # Plots, classification reports, confusion matrices, tuning CSV
+├── models/                             # Saved trained models (.keras)
+├── inspect_model.py                    # (Utility) Model inspection / summaries / parameter counts
+├── evaluate_myhands.py                 # (Utility) Evaluate on custom “my hands” images
+└── requirements.txt                    # (or requirements.py if that’s your file)
+
 ```
 
 ---
