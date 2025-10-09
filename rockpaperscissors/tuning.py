@@ -16,7 +16,7 @@ def _build_model(name, log_priors=None):
 
 # ----------------- tuning core -----------------
 def run_tuning(
-    model_names=("model_a", "model_b", "model_c"),   # <- niente model_d
+    model_names=("model_a", "model_b", "model_c"),
     search_space=None,
     epochs=20,
     steps_train=None,   # es. 100 per velocizzare il tuning; None = full
@@ -46,9 +46,7 @@ def run_tuning(
 
             tf.keras.backend.clear_session()
             model = _build_model(name, log_priors=log_priors)
-
-            ckpt = f"{checkpoint_dir}/{name}_lr{lr}_b{batch}_aug{int(aug)}.keras"
-            cbs = training.make_callbacks(checkpoint_path=ckpt)
+            cbs = training.make_callbacks(checkpoint_path=None)
 
             try:
                 model.optimizer.learning_rate = lr
@@ -68,7 +66,7 @@ def run_tuning(
             row = {
                 "model_name": name, "lr": lr, "batch": batch, "augment": aug,
                 "val_acc": val_acc, "runtime_fit": float(runtime), "runtime_wall": float(wall),
-                "n_params": n_params, "checkpoint": ckpt,
+                "n_params": n_params, "checkpoint": None,
             }
             results.append(row)
             if best is None or val_acc > best["val_acc"]:
@@ -92,7 +90,7 @@ def run_final_training(
     reports_dir: str = "reports",
 ):
     """Training finale pulito sul best del tuning."""
-    assert best is not None and "model_name" in best, "Best dict manca 'model_name'"
+    assert best is not None and "model_name" in best, "Best dict miss 'model_name'"
 
     name   = best["model_name"]; lr = float(best["lr"])
     batch  = int(best["batch"]); augment = bool(best["augment"])
@@ -120,10 +118,6 @@ def run_final_training(
     history, runtime = training.train(model, train_ds, val_ds, epochs=epochs, callbacks=cbs, learning_rate=lr)
     print(f"Final training time: {runtime:.1f}s | Best val_acc: {max(history.history['val_accuracy']):.4f}")
 
-    final_model_path = f"models/{name}_final.keras"
-    model.save(final_model_path)
-    print(f"Saved final model to: {final_model_path}")
-
     model_dir = Path(reports_dir) / f"{name}_final"
     model_dir.mkdir(parents=True, exist_ok=True)
 
@@ -148,7 +142,7 @@ def run_final_training(
 
 # ----------------- helpers per config / main -----------------
 def _normalize_models(sel):
-    alias = {"a":"model_a","b":"model_b","c":"model_c"}  # aggiungi "d" se lo implementi
+    alias = {"a":"model_a","b":"model_b","c":"model_c"}
     if isinstance(sel, str):
         tokens = [t.strip().lower() for t in sel.split(",") if t.strip()]
     elif isinstance(sel, (list, tuple, set)):
@@ -173,14 +167,14 @@ def run_from_config():
         config, "TUNING_EPOCHS",
         10 if getattr(config, "TUNING_FAST", False) else 20
     )
-    steps_tr  = getattr(config, "TUNING_STEPS_TRAIN", None)  # << aggiunti
-    steps_val = getattr(config, "TUNING_STEPS_VAL", None)    # << aggiunti
+    steps_tr  = getattr(config, "TUNING_STEPS_TRAIN", None)
+    steps_val = getattr(config, "TUNING_STEPS_VAL", None)
 
     # restringi lo spazio se solo C (veloce)
     search_space = {"lr":[3e-4,5e-4], "batch":[32,64], "augment":[True]} if model_names == ("model_c",) else None
 
     if bool(getattr(config, "NO_TUNING", False)):
-        print("[tuning] NO_TUNING=True → salto la ricerca.")
+        print("[tuning] NO_TUNING=True → avoid the search.")
         best = {"model_name": model_names[0],
                 "lr": 3e-4 if model_names[0]=="model_c" else 1e-3,
                 "batch": 32, "augment": True}
@@ -189,13 +183,14 @@ def run_from_config():
                           epochs=epochs_tune, steps_train=steps_tr, steps_val=steps_val)
 
     final_epochs = getattr(config, "FINAL_EPOCHS", 50)
-    return run_final_training(best, epochs=final_epochs, checkpoint_path="models/final_best.keras")
+    out_ckpt = f"models/final_best_{best['model_name']}.keras"
+    return run_final_training(best, epochs=final_epochs, checkpoint_path=out_ckpt)
 
-# ----------------- CLI opzionale (tienine UNO solo) -----------------
+# ----------------- CLI opzionale -----------------
 if __name__ == "__main__":
     import argparse
     p = argparse.ArgumentParser(description="Run tuning from CLI")
-    p.add_argument("--models", type=str, default="c", help="a,b,c oppure 'b,c'")
+    p.add_argument("--models", type=str, default="c", help="a,b,c or 'b,c'")
     p.add_argument("--epochs", type=int, default=None, help="Epoche tuning")
     p.add_argument("--steps-train", type=int, default=None)
     p.add_argument("--steps-val", type=int, default=None)

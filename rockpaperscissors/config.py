@@ -11,4 +11,4 @@ TUNING_EPOCHS = 10
 TUNING_STEPS_TRAIN = None
 TUNING_STEPS_VAL = None
 FINAL_EPOCHS = 50
-NO_TUNING = False # switch to True to avoid tuning
+NO_TUNING = True # switch to True to avoid tuning

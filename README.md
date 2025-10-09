@@ -83,9 +83,6 @@ The project trains and compares **four CNN architectures**:
 - **`model_c`**:  
   Residual CNN with projection shortcuts, **label smoothing**, and **dropout** for regularization.  
 
-- **`model_d`**:  
-  Deeper residual CNN, includes **LayerNorm**, dropout, and gradient stabilization.  
-
 All models use:
 - **Adam optimizer** (default LR `3e-4`)  
 - **Categorical cross-entropy** loss (with label smoothing)  
@@ -121,7 +118,9 @@ All models use:
    Run the evaluation with:
 
    ```bash
-   python evaluate_custom.py --model models/model_d.keras --dir my_hands --outdir reports/custom_eval_myhands
+   python evaluate_myhands.py --dir data/my_hands_data --model models/model_a_best.keras  --outdir reports\custom_eval_myhands\myhands_model_a
+   python evaluate_myhands.py --dir data/my_hands_data --model models/model_b_best.keras  --outdir reports\custom_eval_myhands\myhands_model_b
+   python evaluate_myhands.py --dir data/my_hands_data --model models/model_c_best.keras  --outdir reports\custom_eval_myhands\myhands_model_c
    ```
    This generates:
    - custom_classification_report.txt → precision, recall, f1-score 

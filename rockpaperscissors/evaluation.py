@@ -12,9 +12,6 @@ def evaluate_on(ds, model, class_names):
     y_true = np.concatenate(y_true)
     y_pred = np.concatenate(y_pred)
 
-    # temporary debug
-    print("Unique y_true:", np.unique(y_true), "Unique y_pred:", np.unique(y_pred))
-
     # temporary mini-check
     probs_all = []
     for x, y in ds:
