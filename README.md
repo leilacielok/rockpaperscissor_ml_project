@@ -206,7 +206,7 @@ These files are **binary** and cannot be previewed on GitHub, but can be reloade
 To explore a saved model (summary, parameters, validation accuracy, reports):
 
 ```bash
-python inspect_model.py models/model_a.keras
+python inspect_model.py models/model_a_best.keras
 ```
 This will output:
 - Model summary (layers & parameters)
