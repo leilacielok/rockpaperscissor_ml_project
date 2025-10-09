@@ -19,7 +19,7 @@ def make_callbacks(checkpoint_path=None):
         ))
     return cbs
 
-def train(model, train_ds, val_ds, epochs=30, callbacks=None, learning_rate=3e-4):
+def train(model, train_ds, val_ds, epochs=50, callbacks=None, learning_rate=3e-4):
     if getattr(model, "optimizer", None) is None:
         model.compile(
             optimizer=tf.keras.optimizers.Adam(learning_rate=learning_rate),

@@ -176,15 +176,16 @@ def run_from_config():
     if bool(getattr(config, "NO_TUNING", False)):
         print("[tuning] NO_TUNING=True → avoid the search.")
         best = {"model_name": model_names[0],
-                "lr": 3e-4 if model_names[0]=="model_c" else 1e-3,
+                "lr": 3e-4 if model_names[0] == "model_c" else 1e-3,
                 "batch": 32, "augment": True}
+        ckpt_name = f"models/{best['model_name']}.keras"  # <-- es.: models/model_a.keras
     else:
         best = run_tuning(model_names=model_names, search_space=search_space,
                           epochs=epochs_tune, steps_train=steps_tr, steps_val=steps_val)
+        ckpt_name = f"models/{best['model_name']}_best.keras"  # <-- es.: models/model_a_best.keras
 
     final_epochs = getattr(config, "FINAL_EPOCHS", 50)
-    out_ckpt = f"models/final_best_{best['model_name']}.keras"
-    return run_final_training(best, epochs=final_epochs, checkpoint_path=out_ckpt)
+    return run_final_training(best, epochs=final_epochs, checkpoint_path=ckpt_name)
 
 # ----------------- CLI opzionale -----------------
 if __name__ == "__main__":
