@@ -206,7 +206,9 @@ These files are **binary** and cannot be previewed on GitHub, but can be reloade
 To explore a saved model (summary, parameters, validation accuracy, reports):
 
 ```bash
-python .\evaluate_myhands.py --dir data\my_hands_data --model models\model_a_best.keras --outdir reports\custom_eval_myhands\myhands_model_a
+python evaluate_myhands.py --dir data/my_hands_data --model models/model_a_best.keras
+python evaluate_myhands.py --dir data/my_hands_data --model models/model_b_best.keras
+python evaluate_myhands.py --dir data/my_hands_data --model models/model_c_best.keras
 ```
 
 This will output:

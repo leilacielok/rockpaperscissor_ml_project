@@ -1,0 +1,26 @@
+# Evaluation Summary
+
+## Overall
+- Accuracy: 0.3600
+- Macro F1: 0.3445
+
+## Per-class metrics
+- rock: P=0.400  R=0.353  F1=0.375  (support=17)
+- paper: P=0.333  R=0.562  F1=0.419  (support=16)
+- scissors: P=0.375  R=0.176  F1=0.240  (support=17)
+
+## Distributions
+- True counts   : [17, 16, 17]
+- Pred counts   : [15, 27, 8]
+
+## Settings
+- IMG_SIZE: 96
+- RESIZE_MODE: pad
+- USE_TTA: True
+- EVAL_TTA_ROT: True
+- EVAL_ZERO_BIAS: True
+- EVAL_RECALIB: uniform
+- RECALIB_ALPHA: 1.0
+- Pred prior (mean probs pre-recalib): [0.26  0.739 0.   ]
+- Target prior: [0.333 0.333 0.333]
+- Recalib weights: [1.280000e+00 4.510000e-01 1.399381e+03]
