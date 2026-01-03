@@ -201,6 +201,7 @@ Running:
 python main.py
 ```
 (with  ```TUNING=False``` in  ```config.py ```) produces:
+
 reports/
 ├── model_a/
 ├── model_b/
@@ -226,6 +227,7 @@ TUNING = True
 ```
 then ```main.py``` delegates execution to the tuner and exits after final training.
 This produces:
+
 reports/
 ├── model_a_final/   (if selected)
 ├── model_b_final/
@@ -247,6 +249,7 @@ Purpose
 Running:
 ```python evaluate_myhands.py --model models/model_c_best.keras --dir data/my_hands ```
 produces:
+
 reports/
 └── custom_eval_myhands/
     └── my_hands_model_c_best/
@@ -264,6 +267,7 @@ Purpose
 Running: 
 ```python inspect_model.py models/model_c_best.keras ```
 produces:
+
 reports/
 └── model_c_final/   (or model_c/)
     ├── inspect_confusion_matrix_best.png
