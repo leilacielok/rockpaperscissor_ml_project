@@ -1,17 +1,17 @@
 # Evaluation Summary
 
 ## Overall
-- Accuracy: 0.3600
-- Macro F1: 0.3445
+- Accuracy: 0.4559
+- Macro F1: 0.4437
 
 ## Per-class metrics
-- rock: P=0.400  R=0.353  F1=0.375  (support=17)
-- paper: P=0.333  R=0.562  F1=0.419  (support=16)
-- scissors: P=0.375  R=0.176  F1=0.240  (support=17)
+- rock: P=0.440  R=0.478  F1=0.458  (support=23)
+- paper: P=0.424  R=0.636  F1=0.509  (support=22)
+- scissors: P=0.600  R=0.261  F1=0.364  (support=23)
 
 ## Distributions
-- True counts   : [17, 16, 17]
-- Pred counts   : [15, 27, 8]
+- True counts   : [23, 22, 23]
+- Pred counts   : [25, 33, 10]
 
 ## Settings
 - IMG_SIZE: 96
@@ -21,6 +21,6 @@
 - EVAL_ZERO_BIAS: True
 - EVAL_RECALIB: uniform
 - RECALIB_ALPHA: 1.0
-- Pred prior (mean probs pre-recalib): [0.26  0.739 0.   ]
+- Pred prior (mean probs pre-recalib): [0.332 0.668 0.   ]
 - Target prior: [0.333 0.333 0.333]
-- Recalib weights: [1.280000e+00 4.510000e-01 1.399381e+03]
+- Recalib weights: [1.003000e+00 4.990000e-01 1.467412e+03]
