@@ -201,7 +201,7 @@ Running:
 python main.py
 ```
 (with  ```TUNING=False``` in  ```config.py ```) produces:
-
+```
 reports/
 ├── model_a/
 ├── model_b/
@@ -213,6 +213,7 @@ reports/
 │   └── val_misclassified.png
 │
 ├── summary.csv
+```
 
 Purpose
 * Train each architecture on the training set
@@ -227,7 +228,7 @@ TUNING = True
 ```
 then ```main.py``` delegates execution to the tuner and exits after final training.
 This produces:
-
+```
 reports/
 ├── model_a_final/   (if selected)
 ├── model_b_final/
@@ -239,6 +240,7 @@ reports/
 │   └── val_misclassified.png
 │
 ├── tuning_results.csv
+```
 
 Purpose
 * Hyperparameter search
@@ -249,7 +251,7 @@ Purpose
 Running:
 ```python evaluate_myhands.py --model models/model_c_best.keras --dir data/my_hands ```
 produces:
-
+```
 reports/
 └── custom_eval_myhands/
     └── my_hands_model_c_best/
@@ -257,6 +259,7 @@ reports/
         ├── confusion_matrix_model_c_best.png
         ├── misclassified_model_c_best.png
         └── summary_model_c_best.txt
+```
 
 Purpose
 * Evaluate generalization on custom, real-world images
@@ -267,11 +270,12 @@ Purpose
 Running: 
 ```python inspect_model.py models/model_c_best.keras ```
 produces:
-
+```
 reports/
 └── model_c_final/   (or model_c/)
     ├── inspect_confusion_matrix_best.png
     └── classification_report_best.txt
+```
 
 Purpose
 * Inspect a saved model without retraining
