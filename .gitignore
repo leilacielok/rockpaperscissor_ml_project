@@ -1,6 +1,69 @@
-.venv/
+######################################
+# Python / virtual environments
+######################################
 __pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.egg-info/
+.eggs/
+.env
+.venv
+venv/
+ENV/
+env/
+
+######################################
+# Jupyter / IDE
+######################################
+.ipynb_checkpoints/
+.vscode/
 .idea/
-*.pyc
+.spyderproject
+.spyproject
+
+######################################
+# OS / system files
+######################################
 .DS_Store
+Thumbs.db
+desktop.ini
+
+######################################
+# Datasets (DO NOT TRACK DATA)
+######################################
 data/
+!data/README.md
+
+######################################
+# Custom evaluation data (privacy)
+######################################
+data/my_hands_data/
+data/my_hands_data/**
+
+######################################
+# Trained models (large binaries)
+######################################
+models/
+models/**/*.keras
+models/**/*.h5
+
+######################################
+# Custom misclassified
+######################################
+reports/custom_eval_myhands/
+**/misclassified*.pn
+
+######################################
+# Logs and temporary outputs
+######################################
+logs/
+*.log
+tmp/
+temp/
+
+######################################
+# Caches / downloads
+######################################
+.cache/
+.keras/
