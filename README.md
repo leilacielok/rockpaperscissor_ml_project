@@ -249,16 +249,16 @@ Purpose
 
 ### 3️⃣ python evaluate_myhands.py — Custom “My Hands” Evaluation
 Running:
-```python evaluate_myhands.py --model models/model_c_best.keras --dir data/my_hands ```
+```python evaluate_myhands.py --dir data/my_hands_data --model models/model_a_best.keras ```
 produces:
 ```
 reports/
 └── custom_eval_myhands/
-    └── my_hands_model_c_best/
-        ├── classification_report_model_c_best.txt
-        ├── confusion_matrix_model_c_best.png
-        ├── misclassified_model_c_best.png
-        └── summary_model_c_best.txt
+    └── my_hands_model_a_best/
+        ├── classification_report_model_a_best.txt
+        ├── confusion_matrix_model_a_best.png
+        ├── misclassified_model_a_best.png
+        └── summary_model_a_best.txt
 ```
 
 Purpose
