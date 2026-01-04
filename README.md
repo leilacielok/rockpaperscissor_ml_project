@@ -29,6 +29,7 @@ rockpaperscissor_ml_project/
 ├── models/                             # Saved trained models (.keras)
 ├── inspect_model.py                    # (Utility) Model inspection / summaries / parameter counts
 ├── evaluate_myhands.py                 # (Utility) Evaluate on custom “my hands” images
+├── external_eval.py                    # (Utility) Evaluate on external test "rps-cv-images" images
 └── requirements.txt                    
 
 ```
@@ -50,7 +51,7 @@ data/
 ```
 
 - Each folder contains images of the corresponding gesture.  
-- An **external test set** can optionally be added in `data/rps-cv-images/`.
+- An **external test set** was added in `data/rps-cv-images/`.
 
 ### Cleaning
 - Images are automatically resized to **(IMG_SIZE, IMG_SIZE)** as defined in `config.py` (`96×96`)  
@@ -179,11 +180,22 @@ NO_TUNING = False                 # set True to skip tuning
     ```bash
     python main.py
     ```
-   - Train the four architectures 
+   - Train the three architectures 
    - Save trained models in ```/models/``` 
    - Generate reports and plots in ```/reports/```
 
-3. Check outputs:
+3. **Run external evaluation only (optional)**:
+
+    ```bash
+    python external_eval.py
+    ```
+
+   - Load a previously trained final model
+   - Evaluate it on an external dataset (`rps-cv-images`)
+   - Generate external classification report and confusion matrix
+   - Does **not** retrain or modify the models
+
+4. **Check outputs**:
    - reports/summary.csv: validation results for each model 
    - Confusion matrices, learning curves, misclassified samples
 
@@ -247,9 +259,32 @@ Purpose
 * Final clean training of the best configuration
 * Store only the best-performing model and reports
 
-### 3️⃣ python evaluate_myhands.py — Custom “My Hands” Evaluation
+### 3️⃣ python external_eval.py — External / Out-of-Distribution Evaluation
+> Note: This script assumes that a final trained model (e.g., model_c_final) already exists.
+
 Running:
-```python evaluate_myhands.py --dir data/my_hands_data --model models/model_a_best.keras ```
+```bash
+python external_eval.py 
+```
+produces:
+
+```
+reports/
+├── model_c_final/
+│   ├── test_classification_report.txt
+│   └── test_confusion_matrix.png
+```
+Purpose
+* Load the final trained model
+* Evaluate it on an external dataset (rps-cv-images)
+* Perform post-hoc external evaluation only
+* No training, tuning, or model selection is performed
+
+### 4️⃣ python evaluate_myhands.py — Custom “My Hands” Evaluation
+Running:
+```bash
+python evaluate_myhands.py --dir data/my_hands_data --model models/model_a_best.keras 
+```
 produces:
 ```
 reports/
@@ -266,9 +301,11 @@ Purpose
 * Use labeled folder structure as ground truth
 * Optional test-time augmentation and probability recalibration
 
-### 4️⃣ python inspect_model.py — Model Inspection 
+### 5️⃣ python inspect_model.py — Model Inspection 
 Running: 
-```python inspect_model.py models/model_c_best.keras ```
+```bash
+python inspect_model.py models/model_c_best.keras 
+```
 produces:
 ```
 reports/

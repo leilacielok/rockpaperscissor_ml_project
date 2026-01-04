@@ -100,7 +100,8 @@ def main():
     # External test on the best model
     try:
         best_name = max(results, key=lambda t: t[1])[0]
-        best_model = tf.keras.models.load_model(f"models/{best_name}.keras")
+        from keras.models import load_model
+        best_model = load_model(f"models/{best_name}.keras")
         test_ds = data_utils.load_external_test()
         res_test = evaluation.evaluate_on(test_ds, best_model, config.CLASSES)
 
