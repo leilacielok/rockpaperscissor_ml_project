@@ -22,12 +22,48 @@
 \begin{document}
 \maketitle
 
+\vspace{1cm}
+
+\begin{quote}
+\small
+\textit{
+I declare that this material, which I now submit for assessment, is entirely my
+own work and has not been taken from the work of others, save and to the extent
+that such work has been cited and acknowledged within the text of my work. I
+understand that plagiarism, collusion, and copying are grave and serious offences
+in the university and accept the penalties that would be imposed should I engage
+in plagiarism, collusion or copying. This assignment, or any part of it, has not
+been previously submitted by me or any other person for assessment on this or any
+other course of study.
+}
+\end{quote}
+
+\vspace{1cm}
+
+
+\section*{Introduction}
+
+Convolutional Neural Networks (CNNs) have become a standard approach for image
+classification tasks due to their ability to automatically learn hierarchical
+feature representations from raw visual data. In recent years, CNN-based models
+have demonstrated strong performance across a wide range of computer vision
+applications, from object recognition to gesture and action classification.
+
+This project investigates the application of convolutional neural networks to
+the classification of hand gesture images representing the Rock--Paper--Scissors
+game. Using a curated image dataset, three CNN architectures of increasing
+complexity are designed, trained, and systematically compared under identical
+experimental conditions. The analysis focuses not only on classification
+accuracy, but also on training dynamics, error patterns, and robustness to
+domain shift, providing a comprehensive evaluation of how architectural
+choices influence predictive performance and generalization.
+
 \section{Data Exploration and Preprocessing}
 \subsection{Dataset Description and Exploratory Analysis}
 
 The dataset used in this project was obtained from a publicly available
-Kaggle repository containing images of hand gestures for the
-Rock--Paper--Scissors game. It consists of a total of 2,188 RGB images,
+Kaggle repository (\url{https://www.kaggle.com/datasets/drgfreeman/rockpaperscissors}) containing images of hand gestures for the
+Rock--Paper--Scissors game. The dataset consists of a total of 2,188 RGB images,
 evenly distributed across the three target classes: rock (726 images),
 paper (710 images), and scissors (752 images). All images were captured
 against a green background under relatively consistent lighting and
@@ -46,13 +82,31 @@ scenarios. This level of consistency makes the dataset particularly
 suitable for controlled experiments focused on architectural comparisons
 rather than robustness to extreme visual noise.
 
-External datasets are introduced only in the evaluation phase and are
-not used during training or model selection.
+To avoid any form of data leakage, external datasets are introduced only at a
+later stage of the analysis. These datasets are used exclusively for evaluation
+and play no role in model training or model selection, allowing generalization
+to be assessed independently of the training distribution.
+
+\subsection{Train -- Validation Split}
+
+The dataset was split into training and validation subsets using a
+stratified sampling strategy, with 80\% of the images allocated to
+training and 20\% reserved for validation. Stratification was performed
+at the file level to preserve the original class proportions in both
+splits and to guarantee that all classes are represented in each subset.
+
+A fixed random seed was used to ensure reproducibility of the split
+across runs. The validation set was held out entirely from training and
+used exclusively for model selection, hyperparameter tuning, and
+performance evaluation. This splitting strategy provides a reliable
+estimate of in-distribution generalization while maintaining
+methodological transparency and repeatability.
 
 \subsection{Image Preprocessing: Resizing and Normalization}
 
-To ensure compatibility with convolutional neural network architectures
-and to standardize the input space, all images were resized to a fixed
+After splitting the dataset into training and validation subsets, a
+common preprocessing pipeline was applied to all images: to ensure compatibility with convolutional neural network architectures
+and to standardize the input space, images were resized to a fixed
 square resolution of 96 × 96 pixels. Resizing was performed using
 bilinear interpolation with antialiasing, preserving the essential
 spatial structure of the hand gestures while reducing computational cost
@@ -83,83 +137,84 @@ representative of the original distribution. This strategy allows the
 models to learn more robust feature representations while preserving a
 fair and unbiased evaluation protocol.
 
-\subsection{Train -- Validation Split}
-
-The dataset was split into training and validation subsets using a
-stratified sampling strategy, with 80\% of the images allocated to
-training and 20\% reserved for validation. Stratification was performed
-at the file level to preserve the original class proportions in both
-splits and to guarantee that all classes are represented in each subset.
-
-A fixed random seed was used to ensure reproducibility of the split
-across runs. The validation set was held out entirely from training and
-used exclusively for model selection, hyperparameter tuning, and
-performance evaluation. This splitting strategy provides a reliable
-estimate of in-distribution generalization while maintaining
-methodological transparency and repeatability.
-
 \section{CNN Architecture and Training}
 \subsection{Design of CNN Architectures with Incremental Complexity}
 
-To investigate the impact of architectural complexity on image
-classification performance, three convolutional neural network (CNN)
-architectures of increasing expressiveness were designed and evaluated.
-model A serves as a lightweight baseline, intended to capture coarse
-visual patterns with a limited number of convolutional and fully
-connected layers. model B increases representational capacity by
-introducing more efficient convolutional operations, allowing for
-improved feature extraction while maintaining a relatively compact
-parameterization. model C further extends this design by incorporating
-deeper convolutional blocks and architectural regularization mechanisms,
-enabling the network to model more complex spatial relationships and
-hierarchical features. This progressive design strategy allows for a
-systematic comparison between simple and more expressive architectures
-under identical training conditions.
+The three convolutional neural network architectures evaluated in this 
+study were explicitly designed to form a controlled complexity hierarchy, 
+in which representational capacity, depth, and regularization mechanisms 
+are progressively increased while keeping the input resolution and 
+training protocol fixed.
 
-\subsection{Architectural Choices and Design Rationale}
+Model A is a deliberately lightweight architecture intended as a minimal 
+baseline. It relies on a small number of depthwise-separable convolutional 
+layers followed by max-pooling and a shallow fully connected head. The use 
+of separable convolutions significantly reduces the number of trainable 
+parameters and computational cost, enforcing a strong inductive bias toward 
+learning coarse, low-level spatial patterns. A global average pooling layer 
+is employed before the dense classifier, further limiting the model[']s 
+capacity to memorize spatially localized features. As a result, model A 
+primarily captures global shape cues rather than fine-grained gesture details.
 
-Each CNN architecture was constructed using standard building blocks
-commonly adopted in image classification tasks. Convolutional layers
-with ReLU activations were employed to extract spatial features,
-followed by max-pooling layers to progressively reduce spatial
-dimensionality while retaining salient information. Dropout layers were
-introduced in the deeper architectures to mitigate overfitting by
-discouraging co-adaptation of neurons. The final classification stage
-consists of fully connected layers followed by a softmax output layer,
-producing class probabilities over the three target categories
-(\emph{rock}, \emph{paper}, and \emph{scissors}). The architectural
-differences between models A, B, and C are motivated by the need to
-balance model capacity and generalization: simpler models favour
-robustness and computational efficiency, while deeper architectures aim
-to improve discriminative power through richer feature representations.
+Model B represents a modest increase in expressiveness and corresponds to 
+a conventional shallow CNN. It employs standard convolutional layers 
+followed by max-pooling and a fully connected classifier operating on 
+flattened feature maps. Compared to model A, this design increases 
+parameter count and spatial flexibility but lacks explicit architectural 
+regularization mechanisms beyond implicit constraints imposed by depth 
+and pooling. This makes model B more expressive but also more sensitive 
+to distributional shifts, as later evidenced in the out-of-distribution 
+evaluation.
+
+Model C is a custom-designed architecture optimized for stable training 
+and robust feature extraction under constrained data regimes. It combines 
+depthwise separable convolutions, residual connections, and progressive 
+spatial downsampling within a fully convolutional backbone. The network 
+is organized into stages operating at decreasing spatial resolutions 
+(48×48, 24×24, 12×12), allowing it to learn hierarchical representations 
+ranging from local edge-like features to more abstract, gesture-level 
+patterns. A global average pooling head followed by a compact dense 
+layer ensures that classification decisions are based on aggregated 
+semantic information rather than localized activations.
+
+
+\subsection{Architectural Design Choices and Technical Rationale}
+
+Several design decisions were made to ensure training stability, fair comparison, and robustness, particularly given the relatively small size and homogeneity of the training dataset.
+
+First, depthwise separable convolutions are employed extensively in models A and C. This choice reduces parameter count while preserving the ability to model spatial structure, making it well-suited for scenarios where overfitting is a concern. In model C, separable convolutions are combined with residual connections, allowing gradients to propagate effectively through deeper stacks of layers and mitigating degradation effects commonly observed in deeper CNNs.
+
+Second, Layer Normalization (LN) is used instead of Batch Normalization in model C. Since training is performed with relatively small batch sizes and with data augmentation enabled, LN provides more stable normalization statistics that are independent of batch composition. This choice improves convergence consistency and reduces sensitivity to batch-size variations during both tuning and final training.
+
+Third, progressive spatial downsampling is implemented via strided convolutions rather than aggressive pooling. This preserves more information during early stages while still reducing computational complexity, enabling the network to retain discriminative spatial cues relevant for fine-grained hand gesture recognition.
+
+At the classification stage, global average pooling replaces flattening, enforcing translation invariance and reducing the risk of overfitting by preventing the classifier from relying on specific spatial positions. A modest dropout rate is applied in the final dense layer to further discourage co-adaptation of high-level features.
+
+Finally, label smoothing is applied uniformly across all models. This choice regularizes the softmax outputs by preventing overconfident predictions, which is particularly important when models are evaluated under domain shift. In model C, the option to initialize output biases using empirical class priors further stabilizes early training dynamics and reduces class collapse effects observed in simpler architectures.
+
+\paragraph{Model capacity and parameterization.}
+To make the notion of ``incremental complexity'' explicit, the architectures are also compared in terms of trainable parameter count.
+Model~A is a lightweight baseline with 2{,}814 trainable parameters, reflecting the strong inductive bias induced by separable convolutions and a compact classification head.
+Model~B substantially increases capacity (249{,}331 trainable parameters), mainly due to the \texttt{Flatten}+\texttt{Dense} stage operating on high-dimensional feature maps.
+Model~C achieves a favorable capacity--efficiency trade-off with 45{,}523 trainable parameters by relying on depthwise-separable convolutions, residual blocks, and global average pooling, which together reduce parameter growth while enabling deeper hierarchical feature extraction.
+
+\paragraph{Prediction confidence on the validation set.}
+In addition to accuracy-based metrics, the distribution of predicted probabilities provides a coarse indicator of confidence calibration.
+On the validation set, the mean maximum softmax probability increases with model expressiveness (A: 0.59, B: 0.88, C: 0.93), while class-averaged predicted probabilities remain approximately balanced across classes, suggesting that performance gains are not driven by degenerate class priors.
+This diagnostic is later used to interpret robustness under domain shift (Section~4).
+
+For completeness, a summary of model capacity and confidence-related diagnostics is reported in
+Appendix~A (Table~\ref{tab:model_capacity}).
 
 \subsection{Training Setup and Optimization Strategy}
 
-All models were trained using the same optimization framework to ensure
-a fair comparison across architectures. Training was performed using the
-Adam optimizer, which provides adaptive learning-rate adjustments and
-has proven effective for convolutional architectures. Categorical
-cross-entropy was employed as the loss function, consistent with the
-multi-class nature of the classification task. Model performance was
-monitored using accuracy on a held-out validation set. Early stopping
-was applied based on validation performance to prevent overfitting,
-while learning-rate reduction on plateau was used to improve convergence
-stability. This unified training setup ensures that observed performance
-differences can be attributed primarily to architectural choices rather
-than optimization artifacts.
+All architectures are trained using the Adam optimizer with architecture-specific learning rates selected through targeted tuning. Early stopping based on validation accuracy and adaptive learning-rate reduction on plateau are employed consistently across models, ensuring that differences in performance arise from architectural properties rather than optimization artefacts.
+
+To maintain reproducibility and comparability, the same stratified training–validation split and augmentation pipeline are used throughout. Importantly, augmentation is applied exclusively to the training set, preserving the validation set as a faithful proxy of the original data distribution.
 
 \subsection{Hyperparameter Tuning and Final Model Selection}
 
-Hyperparameter tuning was performed on the best-performing architecture
-identified in the initial comparison using a stratified hold-out
-validation set. A targeted search over key hyperparameters---including
-learning rate and number of training epochs---was conducted with
-validation accuracy as the primary selection criterion. Early stopping
-was employed to ensure efficient and automatic model selection. The
-configuration achieving the best validation performance was retained and
-subsequently retrained to convergence, yielding the final model used for
-detailed evaluation and generalization analysis.
-
+Hyperparameter tuning is performed through a constrained grid search over learning rate, batch size, and augmentation settings. Rather than optimizing all architectures exhaustively, tuning focuses on identifying a robust configuration for the most expressive model, reflecting a realistic model selection workflow. Validation accuracy is used as the primary selection criterion, with early stopping ensuring efficient exploration of the search space.
 \section{Evaluation and Analysis}
 
 Building on the architectural comparison introduced in Section 2, this
@@ -565,11 +620,30 @@ environments.
 
 
 
-\section{Appendix}
+\section*{Appendix}
 \appendix
 
 \textbf{Sec. 2.1: {[}Appendix material (per Model A, B, C):} validation
 classification reports, validation confusion matrices, training loss
 curves, and training accuracy curves.{]}
+
+\begin{table}[h]
+\centering
+\caption{Model capacity and confidence-related diagnostics on the validation set.}
+\label{tab:model_capacity}
+\begin{tabular}{lccc}
+\hline
+\textbf{Model} &
+\textbf{Trainable parameters} &
+\textbf{Model size (trainable)} &
+\textbf{Val max-prob ($\mu \pm \sigma$)} \\
+\hline
+Model A & 2{,}814   & 11~KB   & $0.59 \pm 0.15$ \\
+Model B & 249{,}331 & 974~KB  & $0.88 \pm 0.11$ \\
+Model C & 45{,}523  & 178~KB  & $0.93 \pm 0.08$ \\
+\hline
+\end{tabular}
+\end{table}
+
 
 \end{document}
