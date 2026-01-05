@@ -1,0 +1,575 @@
+\documentclass{article}
+
+\usepackage{amsmath,amssymb}
+\usepackage{fontspec}
+\usepackage{unicode-math}
+\usepackage{titling}
+
+\usepackage{graphicx}
+\usepackage{caption}
+
+\usepackage{hyperref}
+\hypersetup{hidelinks}
+
+\setcounter{secnumdepth}{2}
+\setlength{\emergencystretch}{3em}
+\setlength{\droptitle}{-3cm}
+
+\title{Convolutional Neural Network Architectures for Rock--Paper--Scissors Image Classification}
+\author{Leila Cielok}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\section{Data Exploration and Preprocessing}
+\subsection{Dataset Description and Exploratory Analysis}
+
+The dataset used in this project was obtained from a publicly available
+Kaggle repository containing images of hand gestures for the
+Rock--Paper--Scissors game. It consists of a total of 2,188 RGB images,
+evenly distributed across the three target classes: rock (726 images),
+paper (710 images), and scissors (752 images). All images were captured
+against a green background under relatively consistent lighting and
+white balance conditions, resulting in a visually homogeneous and
+well-curated dataset.
+
+Each image is stored in PNG format with an original resolution of 300 ×
+200 pixels and is organized into class-specific subdirectories, enabling
+a straightforward mapping between file structure and class labels. An
+initial exploratory analysis confirmed the near-balanced class
+distribution and the absence of missing or corrupted files. Random
+visual inspection of samples from each class further revealed that the
+hand gestures are generally well-centered and clearly distinguishable,
+with limited intra-class variability compared to real-world acquisition
+scenarios. This level of consistency makes the dataset particularly
+suitable for controlled experiments focused on architectural comparisons
+rather than robustness to extreme visual noise.
+
+External datasets are introduced only in the evaluation phase and are
+not used during training or model selection.
+
+\subsection{Image Preprocessing: Resizing and Normalization}
+
+To ensure compatibility with convolutional neural network architectures
+and to standardize the input space, all images were resized to a fixed
+square resolution of 96 × 96 pixels. Resizing was performed using
+bilinear interpolation with antialiasing, preserving the essential
+spatial structure of the hand gestures while reducing computational cost
+and memory requirements.
+
+Following resizing, pixel intensities were converted to floating-point
+format and normalized to the {[}0, 1{]} range. This normalization step
+was applied directly within the data pipeline rather than as a dedicated
+rescaling layer inside the models, ensuring consistent preprocessing
+across all architectures and simplifying model definitions.
+Normalization facilitates stable and efficient optimization by
+preventing large gradient magnitudes during training.
+
+\subsection{Data Augmentation}
+
+Although the dataset is visually consistent and relatively clean, light
+data augmentation was applied during training to encourage better
+generalization and to reduce sensitivity to small spatial variations.
+Augmentation operations were deliberately kept mild to avoid introducing
+unrealistic distortions, given the already constrained nature of the
+dataset.
+
+Specifically, the training pipeline includes random horizontal flips,
+small rotations, zooming, translations, and slight contrast adjustments.
+These transformations are applied on-the-fly and exclusively to the
+training set, ensuring that validation data remains untouched and
+representative of the original distribution. This strategy allows the
+models to learn more robust feature representations while preserving a
+fair and unbiased evaluation protocol.
+
+\subsection{Train -- Validation Split}
+
+The dataset was split into training and validation subsets using a
+stratified sampling strategy, with 80\% of the images allocated to
+training and 20\% reserved for validation. Stratification was performed
+at the file level to preserve the original class proportions in both
+splits and to guarantee that all classes are represented in each subset.
+
+A fixed random seed was used to ensure reproducibility of the split
+across runs. The validation set was held out entirely from training and
+used exclusively for model selection, hyperparameter tuning, and
+performance evaluation. This splitting strategy provides a reliable
+estimate of in-distribution generalization while maintaining
+methodological transparency and repeatability.
+
+\section{CNN Architecture and Training}
+\subsection{Design of CNN Architectures with Incremental Complexity}
+
+To investigate the impact of architectural complexity on image
+classification performance, three convolutional neural network (CNN)
+architectures of increasing expressiveness were designed and evaluated.
+model A serves as a lightweight baseline, intended to capture coarse
+visual patterns with a limited number of convolutional and fully
+connected layers. model B increases representational capacity by
+introducing more efficient convolutional operations, allowing for
+improved feature extraction while maintaining a relatively compact
+parameterization. model C further extends this design by incorporating
+deeper convolutional blocks and architectural regularization mechanisms,
+enabling the network to model more complex spatial relationships and
+hierarchical features. This progressive design strategy allows for a
+systematic comparison between simple and more expressive architectures
+under identical training conditions.
+
+\subsection{Architectural Choices and Design Rationale}
+
+Each CNN architecture was constructed using standard building blocks
+commonly adopted in image classification tasks. Convolutional layers
+with ReLU activations were employed to extract spatial features,
+followed by max-pooling layers to progressively reduce spatial
+dimensionality while retaining salient information. Dropout layers were
+introduced in the deeper architectures to mitigate overfitting by
+discouraging co-adaptation of neurons. The final classification stage
+consists of fully connected layers followed by a softmax output layer,
+producing class probabilities over the three target categories
+(\emph{rock}, \emph{paper}, and \emph{scissors}). The architectural
+differences between models A, B, and C are motivated by the need to
+balance model capacity and generalization: simpler models favour
+robustness and computational efficiency, while deeper architectures aim
+to improve discriminative power through richer feature representations.
+
+\subsection{Training Setup and Optimization Strategy}
+
+All models were trained using the same optimization framework to ensure
+a fair comparison across architectures. Training was performed using the
+Adam optimizer, which provides adaptive learning-rate adjustments and
+has proven effective for convolutional architectures. Categorical
+cross-entropy was employed as the loss function, consistent with the
+multi-class nature of the classification task. Model performance was
+monitored using accuracy on a held-out validation set. Early stopping
+was applied based on validation performance to prevent overfitting,
+while learning-rate reduction on plateau was used to improve convergence
+stability. This unified training setup ensures that observed performance
+differences can be attributed primarily to architectural choices rather
+than optimization artifacts.
+
+\subsection{Hyperparameter Tuning and Final Model Selection}
+
+Hyperparameter tuning was performed on the best-performing architecture
+identified in the initial comparison using a stratified hold-out
+validation set. A targeted search over key hyperparameters---including
+learning rate and number of training epochs---was conducted with
+validation accuracy as the primary selection criterion. Early stopping
+was employed to ensure efficient and automatic model selection. The
+configuration achieving the best validation performance was retained and
+subsequently retrained to convergence, yielding the final model used for
+detailed evaluation and generalization analysis.
+
+\section{Evaluation and Analysis}
+
+Building on the architectural comparison introduced in Section 2, this
+section evaluates how increasing model complexity translates into
+empirical performance differences.
+
+This section presents the results obtained from the training and
+evaluation pipeline, focusing on the outputs that are most informative
+for assessing model performance, stability, and generalization. Although
+the experimental framework produces a broad set of diagnostic artifacts
+during development, only a selected subset is reported here in order to
+avoid redundancy and to emphasize interpretability.
+
+In particular, the results include:
+
+
+\begin{enumerate}
+\def\labelenumi{\roman{enumi}.}
+\item
+  a quantitative comparison across architectures based on validation
+  performance, including accuracy, precision, recall, and F1-score, used
+  to support model selection (Section 3.1);
+\item
+  an analysis of training dynamics through loss and accuracy curves on
+  both training and validation sets, providing insight into convergence
+  behaviour and learning stability (Section 3.2);
+\item
+  a qualitative analysis of misclassified validation examples, aimed at
+  identifying systematic error patterns and model-specific failure modes
+  (Section 3.3);
+\item
+  an integrated assessment of overfitting and underfitting, based on
+  performance metrics, learning curves, and error structure (Section
+  3.4).
+\end{enumerate}
+
+
+Additional outputs generated during training, such as intermediate
+diagnostics, repeated misclassification grids for non-selected models,
+and inspection-level evaluations, are not discussed in this section, as
+their primary role is to support debugging and model development rather
+than comparative performance analysis. All such artifacts are
+nonetheless retained in the project repository to ensure reproducibility
+and methodological transparency.
+
+\bigskip
+\textbf{Evaluation Protocol}
+
+Model evaluation is based on a stratified hold-out validation strategy
+rather than k-fold cross-validation, which is computationally expensive
+for convolutional neural networks. The validation split is used for
+model selection and hyperparameter tuning, together with early stopping
+based on validation performance. Generalization is further assessed
+through evaluation on two external test sets, one in-distribution and
+one out-of-distribution, providing complementary evidence of robustness
+beyond the validation split.
+
+All experiments were conducted with architectures and input resolutions
+chosen to ensure reasonable computational cost in terms of both running
+time and memory footprint.
+
+
+\subsection{Performance Metrics}
+
+Model performance was assessed using standard multi-class classification
+metrics, including accuracy, precision, recall, and F1-score, computed
+on a held-out validation set. Each metric captures a different and
+complementary aspect of predictive behaviour, allowing a comprehensive
+view of both predictive quality and learning behaviour and a nuanced
+comparison across architectures beyond overall correctness. While
+accuracy summarizes overall correctness, precision and recall capture
+complementary aspects of class-specific performance: precision reflects
+the model's ability to avoid false positive assignments, whereas recall
+measures its capacity to correctly retrieve all instances of a given
+class. The F1-score balances these two dimensions and is particularly
+informative when comparing models with different error profiles. Support
+values confirm that all metrics are computed on a nearly balanced
+validation set, ensuring that macro-averaged scores are meaningful and
+not driven by class imbalance.
+
+A clear and monotonic improvement emerges across architectures. The
+baseline model (model A) exhibits limited accuracy and macro F1-score,
+indicating that its representational capacity is insufficient to
+reliably discriminate among the three gesture classes. This limitation
+manifests primarily through uneven recall across classes, suggesting
+that the model systematically fails to recognize certain gestures even
+when they are present in the input. In practical terms, this behaviour
+corresponds to a high rate of missed detections for specific classes,
+despite a moderate ability to correctly label some of the predictions it
+does make.
+
+Model B marks a substantial qualitative shift in performance. Both
+precision and recall increase consistently across all classes, resulting
+in a strong improvement in the macro F1-score and overall accuracy. This
+indicates that the model not only reduces false positives, but also
+significantly mitigates false negatives. The balanced improvement across
+metrics suggests that the architectural enhancements introduced in model
+B enable the extraction of more stable and discriminative features,
+leading to a more symmetric and reliable error profile.
+
+The most expressive architecture (model C) further consolidates these
+gains, achieving uniformly high precision and recall for all classes.
+The saturation of the F1-score reflects near-complete class separability
+within the validation distribution, with residual errors becoming rare
+and non-systematic. Importantly, the concurrent improvement in all
+reported metrics indicates that performance gains are not driven by a
+trade-off between precision and recall, but rather by a genuine
+reduction in both types of errors. This behaviour provides strong
+evidence that model C learns robust class-specific representations and
+generalizes effectively within the in-distribution validation setting.
+
+Taken together, these results demonstrate that increasing architectural
+expressiveness translates into progressively better error control,
+moving from partial and class-dependent recognition in model A to stable
+and near-perfect classification in model C. This progression provides a
+principled justification for selecting model C as the final architecture
+for subsequent generalization analyses.
+
+\subsection{Training Dynamics}
+
+Training dynamics were analysed by jointly examining the evolution of
+loss and accuracy on both the training and validation sets. These curves
+provide insight into how each architecture learns over time, whether
+performance improvements arise from genuine feature learning or from
+overfitting, and how effectively optimization translates into
+generalization within the validation distribution.
+
+For the baseline architecture A, both training and validation loss
+decrease smoothly during the initial epochs but quickly reach a plateau,
+while accuracy saturates at relatively low values. The absence of a
+widening gap between training and validation curves indicates that the
+model does not overfit the data. Instead, the early stagnation of
+performance suggests limited representational capacity: the model is
+unable to further reduce classification error even on the training set.
+In practical terms, this behaviour is characteristic of mild
+underfitting, where the architecture captures only coarse visual
+patterns and fails to exploit additional training iterations to improve
+class discrimination.
+
+Model B exhibits a markedly different learning trajectory. Loss
+decreases steadily across epochs for both training and validation sets,
+accompanied by a rapid and sustained increase in accuracy. The close
+alignment between training and validation curves throughout the
+optimization process indicates stable learning and efficient use of
+model capacity. From a practical perspective, this pattern suggests that
+the architectural enhancements introduced in model B enable the network
+to learn more expressive features without sacrificing generalization,
+leading to consistent improvements in both error reduction and
+predictive accuracy.
+
+Model C shows similarly smooth and stable convergence, but with faster
+attainment of high accuracy and lower final loss values. Training and
+validation curves remain tightly coupled, with only a minimal and
+non-systematic generalization gap. This behaviour indicates that the
+increased model capacity is effectively controlled through
+regularization, allowing the network to fully exploit its expressiveness
+without overfitting. In practice, this translates into rapid learning of
+highly discriminative representations and stable convergence toward an
+optimal solution.
+
+Overall, the progression of training dynamics across models mirrors the
+performance trends observed in the classification metrics. Model A is
+constrained by insufficient capacity, model B achieves an effective
+balance between learning and generalization, and model C combines high
+expressiveness with stable optimization. These dynamics confirm that the
+observed performance differences are rooted in structural properties of
+the architectures rather than in optimization artefacts or training
+instability.
+
+\subsection{Analysis of Misclassified Examples}
+
+When informative, a qualitative analysis of misclassified examples was
+conducted to identify systematic error patterns and to complement the
+quantitative evaluation provided by aggregate performance metrics. In
+this context, \emph{misclassified samples} are defined as validation
+images for which the predicted class label differs from the ground-truth
+label. For each such instance, the predicted class confidence is
+computed as the maximum softmax probability associated with the model's
+output. This allows misclassifications to be inspected not only in terms
+of correctness, but also in terms of model confidence.
+
+In practice, misclassified samples are ranked according to their
+prediction confidence and a fixed number of the most confident errors is
+visualized. This design choice focuses the analysis on the most
+informative failure cases, namely those in which the model assigns high
+confidence to an incorrect prediction. Such errors are particularly
+relevant, as they reveal systematic confusions in the learned
+representation rather than borderline or noisy instances.
+
+The qualitative patterns observed differ substantially across
+architectures. For model A, misclassifications are relatively frequent
+and exhibit limited structural coherence. Errors span multiple class
+pairs and often involve gestures that are visually canonical but
+insufficiently captured by the model's low-capacity feature
+representations. In several cases, the model assigns moderate to high
+confidence to incorrect predictions, indicating that it relies on
+incomplete or misleading visual cues rather than on robust
+class-defining features. This behaviour is consistent with the
+quantitative results and with the training dynamics observed for model
+A, and provides further evidence of underfitting.
+
+For model B, misclassified examples become markedly fewer and more
+structured. Errors are primarily associated with visually ambiguous
+instances, such as partial hand occlusions, non-standard finger
+extensions, or poses captured at atypical orientations. Importantly,
+these misclassifications tend to occur at lower confidence levels,
+suggesting that the model exhibits increased uncertainty when confronted
+with borderline cases rather than systematically misinterpreting them.
+This pattern reflects a more refined internal representation of gesture
+classes and aligns with the balanced precision--recall improvements
+observed in the quantitative evaluation
+
+Misclassifications for model C are rare and highly localized. When
+present, they almost exclusively involve intrinsically ambiguous images
+in which class boundaries are visually blurred, for example due to
+motion blur, extreme perspective, or transitional hand poses between
+gestures. Even in these cases, predicted confidence values are generally
+lower than those observed for incorrect predictions in simpler
+architectures, indicating that the model is aware of its uncertainty.
+This behaviour suggests that residual errors are driven by limitations
+in the visual signal itself rather than by deficiencies in the learned
+representation
+
+In light of the above, the qualitative analysis of misclassified
+examples reinforces the conclusions drawn from performance metrics and
+training dynamics. As model capacity increases, errors transition from
+frequent and unstructured (model A), to rare and ambiguity-driven
+(models B and C). This progression indicates that improvements in
+classification performance are accompanied by a qualitative shift in the
+nature of errors, from representational failures to irreducible visual
+ambiguity.
+
+\subsection{Overfitting and Underfitting Assessment}
+
+The presence or absence of overfitting and underfitting was assessed by
+jointly analysing quantitative performance metrics, training and
+validation learning curves, and the qualitative structure of
+classification errors. This combined perspective allows potential
+optimization artefacts to be distinguished from genuine limitations in
+model capacity.
+
+For the baseline architecture, evidence of underfitting is apparent.
+Training accuracy saturates at relatively low levels and does not
+continue to improve with additional epochs, while training and
+validation loss curves remain closely aligned. This pattern indicates
+that the model is unable to sufficiently reduce error even on the
+training data, ruling out overfitting and pointing instead to inadequate
+representational capacity. The qualitative analysis of misclassified
+examples further supports this diagnosis, as errors are frequent and
+lack a consistent structural pattern, suggesting incomplete feature
+learning rather than noise sensitivity.
+
+In contrast, no evidence of overfitting is observed for the more
+expressive architectures. For both model B and C, training and
+validation accuracy curves evolve in parallel, and validation loss does
+not exhibit late-stage divergence or instability. The absence of a
+widening generalization gap indicates that performance improvements are
+not driven by memorization of the training data. Instead, these models
+appear to learn representations that generalize reliably within the
+validation distribution. Model C, in particular, combines high
+predictive performance with stable optimization behaviour. The minimal
+and non-systematic differences between training and validation curves,
+together with the rarity and structure of residual errors, suggest that
+the model operates in a regime of effective capacity rather than
+over-parameterization. Consequently, the selected architecture
+demonstrates robustness under in-distribution conditions, while the
+comparison across models highlights the central role of architectural
+capacity in determining whether a model underfits, generalizes
+effectively, or risks overfitting.
+
+\section{Generalization Test}
+\subsection{External In-Distribution Evaluation}
+
+In order to disentangle generalization within the same acquisition
+domain from robustness to genuine domain shift, the final model (model
+C) was additionally evaluated on the \emph{rps-cv-images} dataset. This
+dataset is external to the training and validation splits, but shares
+similar characteristics in terms of background, lighting conditions, and
+gesture presentation.
+
+The model achieves near-perfect performance on this benchmark, with an
+overall accuracy of 100\% across 2,188 test images and only a handful of
+isolated misclassifications. The confusion matrix is almost perfectly
+diagonal, and precision, recall, and F1-scores reach unity for all
+classes.
+
+These results confirm that the selected architecture generalizes
+extremely well to unseen data drawn from the same underlying
+distribution. Consequently, the performance degradation observed on the
+custom dataset can be attributed primarily to domain shift rather than
+to overfitting or instability of the learned representations.
+
+\subsection{External Out-of-Distribution Evaluation}
+\subsubsection{Custom Dataset description}
+
+The custom dataset used for the out-of-distribution evaluation consists
+of a small collection of hand gesture images representing the three
+target classes (\emph{rock}, \emph{paper}, and \emph{scissors}),
+acquired outside the original training distribution. The images were
+captured using consumer-grade devices under unconstrained conditions and
+include hands belonging to multiple individuals rather than a single
+subject. This choice introduces natural variability in hand shape, skin
+tone, finger proportions, and gesture execution style, thereby
+increasing the heterogeneity of the dataset.
+
+In addition to subject variability, the images exhibit substantial
+diversity in background, lighting conditions, and viewpoint. Backgrounds
+range from uniform surfaces to textured environments such as wooden
+floors, tiled areas, and indoor furnishings, while lighting conditions
+vary from diffuse natural light to indoor artificial illumination. The
+hand poses are not strictly canonical: gestures may be partially
+rotated, cropped, or captured at non-standard distances and angles.
+Accessories such as watches or wristbands are also present in some
+images, further increasing visual complexity.
+
+Although the dataset is approximately class-balanced, it is
+intentionally small and uncurated, reflecting realistic acquisition
+conditions rather than controlled laboratory settings. As such, it is
+not intended to provide statistically robust performance estimates, but
+rather to serve as a qualitative stress test for model robustness and
+generalization under domain shift. The dataset allows for a focused
+analysis of how well models trained on clean, curated data transfer to
+real-world scenarios characterized by higher intra-class variability and
+reduced visual consistency.
+
+\subsubsection{Out-of-Distribution Evaluation on Custom Data}
+
+The evaluation on the custom hand-gesture dataset highlights a clear and
+systematic difference in robustness across the three architectures under
+out-of-distribution conditions. Despite the dataset being nearly
+class-balanced, models A and B exhibit a pronounced bias towards the
+\emph{scissors} class, as evidenced by highly skewed predicted class
+distributions and extreme mean predicted priors. In particular, model B
+collapses almost entirely onto \emph{scissors} (predicted prior $\approx$
+{[}0.003, 0.001, 0.996{]}), while model A shows a slightly milder but
+still substantial preference for the same class.
+
+This behaviour is reflected in their confusion matrices and per-class
+metrics, where \emph{scissors} achieves comparatively high recall at the
+expense of \emph{rock} and especially \emph{paper}, whose recall drops
+to near-zero values. The corresponding misclassified-image grids further
+reveal that, under domain shift, visually ambiguous \emph{rock} and
+\emph{paper} gestures are consistently mapped to \emph{scissors} with
+high confidence, indicating that simpler architectures tend to default
+to the most visually distinctive class when uncertainty increases.
+
+Model C, while not immune to domain shift, substantially mitigates this
+failure mode. Its predictions are distributed across all three classes,
+yielding higher overall accuracy and macro F1-score, and a confusion
+matrix that preserves meaningful structure rather than degenerating into
+a single-class predictor. Although the mean predicted prior for
+\emph{scissors} is close to zero before recalibration, the confusion
+matrix confirms that \emph{scissors} is still actively predicted, albeit
+with lower confidence, pointing to a calibration issue rather than a
+hard classification collapse.
+
+Overall, these results suggest that increased representational capacity
+and architectural regularization improve robustness to real-world
+variability, while also highlighting the intrinsic difficulty of
+reliably distinguishing hand gestures under uncontrolled acquisition
+conditions.
+
+\section{Conclusion and Future Work}
+
+This project investigated the effectiveness of convolutional neural
+networks of increasing architectural complexity for the classification
+of hand gesture images representing rock, paper, and scissors. Through a
+systematic comparison of three CNN architectures trained under identical
+optimization settings, the analysis demonstrated a clear relationship
+between model capacity and predictive performance. While the baseline
+architecture exhibited signs of underfitting and limited discriminative
+power, progressively deeper and better-regularized models achieved very
+strong in-distribution performance, confirming the benefits of increased
+representational expressiveness for this task.
+
+Beyond in-distribution evaluation, the study placed particular emphasis
+on model robustness under domain shift by introducing an external test
+set composed of unconstrained, real-world hand gesture images. This
+generalization test revealed that simpler architectures tend to collapse
+toward visually dominant classes when confronted with unfamiliar
+acquisition conditions, leading to highly skewed predictions and poor
+class balance. In contrast, the most expressive model retained a more
+structured decision behaviour and substantially mitigated this failure
+mode, although some degradation in confidence calibration remained.
+These findings highlight that strong validation performance alone is not
+sufficient to guarantee robustness in real-world scenarios and
+underscore the importance of explicitly evaluating models under
+out-of-distribution conditions.
+
+Despite these encouraging results, several limitations must be
+acknowledged. The custom dataset used for the generalization test is
+intentionally small and qualitative in nature, preventing statistically
+robust performance estimates. Moreover, all models were trained
+exclusively on a curated dataset, without the use of advanced data
+augmentation strategies or domain adaptation techniques that could
+further enhance robustness. Future work could therefore explore the
+impact of more aggressive augmentation pipelines, the inclusion of
+real-world images during training, or transfer learning approaches to
+improve generalization. Additionally, investigating probabilistic
+calibration methods and confidence-aware decision mechanisms could help
+address residual uncertainty when models are deployed in unconstrained
+environments.
+
+
+
+\section{Appendix}
+\appendix
+
+\textbf{Sec. 2.1: {[}Appendix material (per Model A, B, C):} validation
+classification reports, validation confusion matrices, training loss
+curves, and training accuracy curves.{]}
+
+\end{document}
