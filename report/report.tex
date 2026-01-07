@@ -3,7 +3,6 @@
 \usepackage{amsmath,amssymb}
 \usepackage{fontspec}
 \usepackage{unicode-math}
-\usepackage{titling}
 
 \usepackage{graphicx}
 \usepackage{caption}
@@ -13,35 +12,55 @@
 
 \setcounter{secnumdepth}{2}
 \setlength{\emergencystretch}{3em}
-\setlength{\droptitle}{-3cm}
-
-\title{Convolutional Neural Network Architectures for Rock--Paper--Scissors Image Classification}
-\author{Leila Cielok}
-\date{\today}
+\usepackage[a4paper,margin=2.5cm]{geometry}
 
 \begin{document}
-\maketitle
 
-\vspace{1cm}
+\begin{titlepage}
+\thispagestyle{empty}
+\centering
 
-\begin{quote}
-\small
-\textit{
-I declare that this material, which I now submit for assessment, is entirely my
-own work and has not been taken from the work of others, save and to the extent
-that such work has been cited and acknowledged within the text of my work. I
-understand that plagiarism, collusion, and copying are grave and serious offences
-in the university and accept the penalties that would be imposed should I engage
-in plagiarism, collusion or copying. This assignment, or any part of it, has not
-been previously submitted by me or any other person for assessment on this or any
-other course of study.
-}
-\end{quote}
+\vspace*{0.2cm}
+\includegraphics[width=0.75\textwidth]{logo_unimi.jpg}
+\vspace{2.2cm}
 
-\vspace{1cm}
 
+{\LARGE\bfseries
+Convolutional Neural Network Architectures for\\[0.3em]
+Rock--Paper--Scissors Image Classification\par}
+
+\vspace{0.7cm}
+{\normalsize End-Of-Course Project\par}
+
+\vspace{2.0cm}
+
+{\normalsize Leila Cielok\par}
+
+\vspace{0.5 cm}
+{\normalsize Data Science for Economics (Master's Degree)\par}
+{\normalsize II Year\par}
+
+\vfill
+
+    \begin{quote}
+    \small\itshape
+    I declare that this material, which I now submit for assessment, is entirely my
+    own work and has not been taken from the work of others, save and to the extent
+    that such work has been cited and acknowledged within the text of my work. I
+    understand that plagiarism, collusion, and copying are grave and serious offences
+    in the university and accept the penalties that would be imposed should I engage
+    in plagiarism, collusion or copying. This assignment, or any part of it, has not
+    been previously submitted by me or any other person for assessment on this or any
+    other course of study.
+    \end{quote}
+
+    \vfill
+    {\large February 13, 2026\par}
+
+\end{titlepage}
 
 \section*{Introduction}
+
 
 Convolutional Neural Networks (CNNs) have become a standard approach for image
 classification tasks due to their ability to automatically learn hierarchical
