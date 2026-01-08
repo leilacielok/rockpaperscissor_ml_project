@@ -316,7 +316,22 @@ values confirm that all metrics are computed on a nearly balanced
 validation set, ensuring that macro-averaged scores are meaningful and
 not driven by class imbalance.
 
-A clear and monotonic improvement emerges across architectures. The
+\begin{table}[h]
+\centering
+\caption{Validation performance comparison across architectures. Metrics are macro-averaged over classes.}
+\label{tab:validation_performance}
+\begin{tabular}{lcccc}
+\hline
+Model & Accuracy & Precision (macro) & Recall (macro) & F1-score (macro) \\
+\hline
+Model A & 0.81 & 0.83 & 0.81 & 0.82 \\
+Model B & 0.97 & 0.97 & 0.97 & 0.97 \\
+Model C & 0.99 & 0.99 & 0.99 & 0.99 \\
+\hline
+\end{tabular}
+\end{table}
+
+As shown in Table~\ref{tab:validation_performance}, a clear and monotonic improvement emerges across architectures. The
 baseline model (model A) exhibits limited accuracy and macro F1-score,
 indicating that its representational capacity is insufficient to
 reliably discriminate among the three gesture classes. This limitation
@@ -644,10 +659,6 @@ environments.
 \section*{Appendix}
 \appendix
 
-\textbf{Sec. 2.1: {[}Appendix material (per Model A, B, C):} validation
-classification reports, validation confusion matrices, training loss
-curves, and training accuracy curves.{]}
-
 \begin{table}[h]
 \centering
 \caption{Model capacity and confidence-related diagnostics on the validation set.}
@@ -665,6 +676,7 @@ Model C & 45{,}523  & 178~KB  & $0.93 \pm 0.08$ \\
 \hline
 \end{tabular}
 \end{table}
+
 
 
 \end{document}
