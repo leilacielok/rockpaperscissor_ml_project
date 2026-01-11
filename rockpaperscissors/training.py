@@ -33,3 +33,4 @@ def train(model, train_ds, val_ds, epochs=50, callbacks=None, learning_rate=3e-4
     )
     runtime = perf_counter() - t0
     return history, runtime
+

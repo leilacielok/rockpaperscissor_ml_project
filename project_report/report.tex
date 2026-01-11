@@ -5,7 +5,8 @@
 \usepackage{unicode-math}
 
 \usepackage{graphicx}
-\usepackage{caption}
+\usepackage[font=small,labelfont=bf,textfont=it]{caption}
+
 
 \usepackage{hyperref}
 \hypersetup{hidelinks}
@@ -224,8 +225,26 @@ In addition to accuracy-based metrics, the distribution of predicted probabiliti
 On the validation set, the mean maximum softmax probability increases with model expressiveness (A: 0.59, B: 0.88, C: 0.93), while class-averaged predicted probabilities remain approximately balanced across classes, suggesting that performance gains are not driven by degenerate class priors.
 This diagnostic is later used to interpret robustness under domain shift (Section~4).
 
-For completeness, a summary of model capacity and confidence-related diagnostics is reported in
-Appendix~A (Table~\ref{tab:model_capacity}).
+For completeness, a summary of model capacity and confidence-related diagnostics is reported in Table~\ref{tab:model_capacity}.
+
+\begin{table}[h]
+\centering
+\caption{Model capacity and confidence-related diagnostics on the validation set.}
+\label{tab:model_capacity}
+\begin{tabular}{lccc}
+\hline
+\textbf{Model} &
+\textbf{Trainable parameters} &
+\textbf{Model size (trainable)} &
+\textbf{Val max-prob ($\mu \pm \sigma$)} \\
+\hline
+Model A & 2{,}814   & 11~KB   & $0.59 \pm 0.15$ \\
+Model B & 249{,}331 & 974~KB  & $0.88 \pm 0.11$ \\
+Model C & 45{,}523  & 178~KB  & $0.93 \pm 0.08$ \\
+\hline
+\end{tabular}
+\end{table}
+
 
 \subsection{Training Setup and Optimization Strategy}
 
@@ -419,6 +438,25 @@ expressiveness with stable optimization. These dynamics confirm that the
 observed performance differences are rooted in structural properties of
 the architectures rather than in optimization artefacts or training
 instability.
+
+Training and validation learning curves for loss and accuracy across all architectures
+are reported in Figures~\ref{fig:training_accuracy} and~\ref{fig:training_loss}.
+
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=\linewidth]{reports/fig_training_accuracy_all_models.png}
+\caption{Training and validation accuracy curves for the three final architectures.}
+\label{fig:training_accuracy}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=\linewidth]{reports/fig_training_loss_all_models.png}
+\caption{Training and validation loss curves for the three final architectures.}
+\label{fig:training_loss}
+\end{figure}
+
 
 \subsection{Analysis of Misclassified Examples}
 
@@ -659,23 +697,7 @@ environments.
 \section*{Appendix}
 \appendix
 
-\begin{table}[h]
-\centering
-\caption{Model capacity and confidence-related diagnostics on the validation set.}
-\label{tab:model_capacity}
-\begin{tabular}{lccc}
-\hline
-\textbf{Model} &
-\textbf{Trainable parameters} &
-\textbf{Model size (trainable)} &
-\textbf{Val max-prob ($\mu \pm \sigma$)} \\
-\hline
-Model A & 2{,}814   & 11~KB   & $0.59 \pm 0.15$ \\
-Model B & 249{,}331 & 974~KB  & $0.88 \pm 0.11$ \\
-Model C & 45{,}523  & 178~KB  & $0.93 \pm 0.08$ \\
-\hline
-\end{tabular}
-\end{table}
+
 
 
 
