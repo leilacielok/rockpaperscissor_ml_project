@@ -396,10 +396,26 @@ for subsequent generalization analyses.
 
 Training dynamics were analysed by jointly examining the evolution of
 loss and accuracy on both the training and validation sets. These curves
-provide insight into how each architecture learns over time, whether
+are reported in Figures~\ref{fig:training_accuracy} and~\ref{fig:training_loss}
+and provide insight into how each architecture learns over time, whether
 performance improvements arise from genuine feature learning or from
 overfitting, and how effectively optimization translates into
 generalization within the validation distribution.
+
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=\linewidth]{fig_training_accuracy_all_models.png}
+\caption{Training and validation accuracy curves for the three final architectures.}
+\label{fig:training_accuracy}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=\linewidth]{fig_training_loss_all_models.png}
+\caption{Training and validation loss curves for the three final architectures.}
+\label{fig:training_loss}
+\end{figure}
 
 For the baseline architecture A, both training and validation loss
 decrease smoothly during the initial epochs but quickly reach a plateau,
@@ -442,24 +458,6 @@ expressiveness with stable optimization. These dynamics confirm that the
 observed performance differences are rooted in structural properties of
 the architectures rather than in optimization artefacts or training
 instability.
-
-Training and validation learning curves for loss and accuracy across all architectures
-are reported in Figures~\ref{fig:training_accuracy} and~\ref{fig:training_loss}.
-
-
-\begin{figure}[h]
-\centering
-\includegraphics[width=\linewidth]{fig_training_accuracy_all_models.png}
-\caption{Training and validation accuracy curves for the three final architectures.}
-\label{fig:training_accuracy}
-\end{figure}
-
-\begin{figure}[h]
-\centering
-\includegraphics[width=\linewidth]{fig_training_loss_all_models.png}
-\caption{Training and validation loss curves for the three final architectures.}
-\label{fig:training_loss}
-\end{figure}
 
 
 \subsection{Analysis of Misclassified Examples}
