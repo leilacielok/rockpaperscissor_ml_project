@@ -15,6 +15,10 @@
 \setlength{\emergencystretch}{3em}
 \usepackage[a4paper,margin=2.5cm]{geometry}
 
+\usepackage{graphicx}
+\graphicspath{{../reports/}}
+
+
 \begin{document}
 
 \begin{titlepage}
@@ -445,14 +449,14 @@ are reported in Figures~\ref{fig:training_accuracy} and~\ref{fig:training_loss}.
 
 \begin{figure}[h]
 \centering
-\includegraphics[width=\linewidth]{reports/fig_training_accuracy_all_models.png}
+\includegraphics[width=\linewidth]{fig_training_accuracy_all_models.png}
 \caption{Training and validation accuracy curves for the three final architectures.}
 \label{fig:training_accuracy}
 \end{figure}
 
 \begin{figure}[h]
 \centering
-\includegraphics[width=\linewidth]{reports/fig_training_loss_all_models.png}
+\includegraphics[width=\linewidth]{fig_training_loss_all_models.png}
 \caption{Training and validation loss curves for the three final architectures.}
 \label{fig:training_loss}
 \end{figure}
