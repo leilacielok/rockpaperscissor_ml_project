@@ -653,13 +653,19 @@ a single-class predictor. Although the mean predicted prior for
 \emph{scissors} is close to zero before recalibration, the confusion
 matrix confirms that \emph{scissors} is still actively predicted, albeit
 with lower confidence, pointing to a calibration issue rather than a
-hard classification collapse.
+hard classification collapse. 
+The systematic class collapse observed for models A and B, and its 
+mitigation in model C, are clearly illustrated by the confusion matrices 
+reported in Appendix~C (Figure~\ref{fig:app_custom_confusion_combined}).
+
 
 Overall, these results suggest that increased representational capacity
 and architectural regularization improve robustness to real-world
 variability, while also highlighting the intrinsic difficulty of
 reliably distinguishing hand gestures under uncontrolled acquisition
-conditions.
+conditions. This behaviour is further characterized by the mean predicted 
+class priors reported in Appendix~C (Table~\ref{tab:app_custom_pred_priors}).
+
 
 \section{Conclusion and Future Work}
 
@@ -784,6 +790,39 @@ Weighted avg  & 1.00 & 1.00 & 1.00 & 2188 \\
     \caption{Confusion matrix for model C on the external in-distribution test set (\emph{rps-cv-images}).}
     \label{fig:app_test_confusion}
 \end{figure}
+
+\section{External Out-Of-Distribution Evaluation Details}
+
+\subsection{Confusion matrices}
+
+\begin{figure}[!htbp]
+\centering
+\includegraphics[width=0.9\linewidth]{custom_eval_myhands/confusion_matrices_custom_combined.png}
+\caption{Confusion matrices for the three architectures evaluated on the custom out-of-distribution dataset.}
+\label{fig:app_custom_confusion_combined}
+\end{figure}
+
+\FloatBarrier
+
+\subsection{Predicted class priors}
+
+\begin{table}[!htbp]
+\centering
+\caption{Mean predicted class priors (pre-recalibration) for the three architectures on the custom out-of-distribution dataset.}
+\label{tab:app_custom_pred_priors}
+\begin{tabular}{lccc}
+\hline
+\textbf{Model} & \textbf{Rock} & \textbf{Paper} & \textbf{Scissors} \\
+\hline
+Model A & 0.066 & 0.074 & 0.860 \\
+Model B & 0.003 & 0.001 & 0.996 \\
+Model C & 0.332 & 0.668 & 0.000 \\
+\hline
+Target prior & 0.333 & 0.333 & 0.333 \\
+\hline
+\end{tabular}
+\end{table}
+
 
 
 \end{document}
