@@ -474,11 +474,15 @@ of correctness, but also in terms of model confidence.
 
 In practice, misclassified samples are ranked according to their
 prediction confidence and a fixed number of the most confident errors is
-visualized. This design choice focuses the analysis on the most
+selected for qualitative inspection. This design choice focuses the analysis on the most
 informative failure cases, namely those in which the model assigns high
 confidence to an incorrect prediction. Such errors are particularly
 relevant, as they reveal systematic confusions in the learned
 representation rather than borderline or noisy instances.
+Representative misclassified examples for each final architecture are 
+shown in Figure~X (models A–C), ordered by decreasing prediction 
+confidence.
+
 
 The qualitative patterns observed differ substantially across
 architectures. For model A, misclassifications are relatively frequent
@@ -695,11 +699,53 @@ address residual uncertainty when models are deployed in unconstrained
 environments.
 
 
-
-\section*{Appendix}
 \appendix
+\section*{Appendix}
+\addcontentsline{toc}{section}{Appendix}
+
+\section{Additional Qualitative Diagnostics}
+\subsection{Misclassified examples}
+
+Images are ranked by decreasing prediction confidence. Each panel reports the true label (T), the predicted label (P), and the associated softmax confidence score.
 
 
+
+\newcommand{\misclfimgAB}[1]{%
+  \includegraphics[
+    width=0.92\linewidth,
+    height=0.50\textheight,
+    keepaspectratio
+  ]{#1}
+}
+
+\newcommand{\misclfimgC}[1]{%
+  \includegraphics[
+    width=0.85\linewidth,
+    height=0.35\textheight,
+    keepaspectratio
+  ]{#1}
+}
+
+\begin{figure}[!htbp]
+    \centering
+    \misclfimgAB{model_A_final/val_misclassified.png}
+    \caption{Most confident misclassified validation samples for \textbf{Model A}.}
+    \label{fig:app_misclf_A}
+\end{figure}
+
+\begin{figure}[!htbp]
+    \centering
+    \misclfimgAB{model_B_final/val_misclassified.png}
+    \caption{Most confident misclassified validation samples for \textbf{Model B}.}
+    \label{fig:app_misclf_B}
+\end{figure}
+
+\begin{figure}[!htbp]
+    \centering
+    \misclfimgC{model_C_final/val_misclassified.png}
+    \caption{Most confident misclassified validation samples for \textbf{Model C}.}
+    \label{fig:app_misclf_C}
+\end{figure}
 
 
 
