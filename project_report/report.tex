@@ -4,6 +4,7 @@
 \usepackage{fontspec}
 \usepackage{unicode-math}
 
+\usepackage{placeins}
 \usepackage{graphicx}
 \usepackage[font=small,labelfont=bf,textfont=it]{caption}
 
@@ -483,7 +484,6 @@ Representative misclassified examples for each final architecture are
 shown in Figure~X (models A–C), ordered by decreasing prediction 
 confidence.
 
-
 The qualitative patterns observed differ substantially across
 architectures. For model A, misclassifications are relatively frequent
 and exhibit limited structural coherence. Errors span multiple class
@@ -548,22 +548,23 @@ lack a consistent structural pattern, suggesting incomplete feature
 learning rather than noise sensitivity.
 
 In contrast, no evidence of overfitting is observed for the more
-expressive architectures. For both model B and C, training and
+expressive architectures. For both models B and C, training and
 validation accuracy curves evolve in parallel, and validation loss does
-not exhibit late-stage divergence or instability. The absence of a
-widening generalization gap indicates that performance improvements are
-not driven by memorization of the training data. Instead, these models
-appear to learn representations that generalize reliably within the
+not exhibit late-stage divergence or instability. The absence of a 
+widening generalization gap indicates that performance improvements 
+are not driven by memorization of the training data, but rather by the 
+learning of representations that generalize reliably within the 
 validation distribution. Model C, in particular, combines high
 predictive performance with stable optimization behaviour. The minimal
 and non-systematic differences between training and validation curves,
 together with the rarity and structure of residual errors, suggest that
 the model operates in a regime of effective capacity rather than
-over-parameterization. Consequently, the selected architecture
-demonstrates robustness under in-distribution conditions, while the
-comparison across models highlights the central role of architectural
-capacity in determining whether a model underfits, generalizes
-effectively, or risks overfitting.
+over-parameterization. Consequently, the selected architecture 
+demonstrates robustness under in-distribution conditions. 
+More broadly, the comparison across models highlights the central role 
+of architectural capacity in determining whether a model underfits, 
+generalizes effectively, or risks overfitting.
+
 
 \section{Generalization Test}
 \subsection{External In-Distribution Evaluation}
@@ -576,10 +577,13 @@ similar characteristics in terms of background, lighting conditions, and
 gesture presentation.
 
 The model achieves near-perfect performance on this benchmark, with an
-overall accuracy of 100\% across 2,188 test images and only a handful of
+overall accuracy exceeding 99\% across 2,188 test images and only a handful of
 isolated misclassifications. The confusion matrix is almost perfectly
 diagonal, and precision, recall, and F1-scores reach unity for all
 classes.
+Detailed quantitative results, including the classification report and 
+confusion matrix, are provided in Appendix~B.
+
 
 These results confirm that the selected architecture generalizes
 extremely well to unseen data drawn from the same underlying
@@ -708,8 +712,6 @@ environments.
 
 Images are ranked by decreasing prediction confidence. Each panel reports the true label (T), the predicted label (P), and the associated softmax confidence score.
 
-
-
 \newcommand{\misclfimgAB}[1]{%
   \includegraphics[
     width=0.92\linewidth,
@@ -747,6 +749,41 @@ Images are ranked by decreasing prediction confidence. Each panel reports the tr
     \label{fig:app_misclf_C}
 \end{figure}
 
+\FloatBarrier
+
+\section{External In-Distribution Evaluation Details}
+
+\subsection{Classification report}
+
+\begin{table}[!htbp]
+\centering
+\caption{Classification report for model C on the external in-distribution test set \emph{rps-cv-images} (rounded values).}
+\label{tab:app_test_classification_report}
+\begin{tabular}{lcccc}
+\hline
+\textbf{Class} & \textbf{Precision} & \textbf{Recall} & \textbf{F1-score} & \textbf{Support} \\
+\hline
+Rock      & 1.00 & 1.00 & 1.00 & 726 \\
+Paper     & 1.00 & 1.00 & 1.00 & 712 \\
+Scissors  & 1.00 & 1.00 & 1.00 & 750 \\
+\hline
+Accuracy      &      &      & 1.00 & 2188 \\
+Macro avg     & 1.00 & 1.00 & 1.00 & 2188 \\
+Weighted avg  & 1.00 & 1.00 & 1.00 & 2188 \\
+\hline
+\end{tabular}
+\end{table}
+
+\FloatBarrier 
+
+\subsection{Confusion matrix}
+
+\begin{figure}[!htbp]
+    \centering
+    \includegraphics[width=0.6\linewidth]{model_C_final/test_confusion_matrix.png}
+    \caption{Confusion matrix for model C on the external in-distribution test set (\emph{rps-cv-images}).}
+    \label{fig:app_test_confusion}
+\end{figure}
 
 
 \end{document}
