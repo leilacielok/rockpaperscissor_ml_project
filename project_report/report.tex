@@ -61,7 +61,7 @@ Rock--Paper--Scissors Image Classification\par}
     \end{quote}
 
     \vfill
-    {\large February 13, 2026\par}
+    {\large February 28, 2026\par}
 
 \end{titlepage}
 
@@ -255,7 +255,7 @@ Model C & 45{,}523  & 178~KB  & $0.93 \pm 0.08$ \\
 
 All architectures are trained using the Adam optimizer with architecture-specific learning rates selected through targeted tuning. Early stopping based on validation accuracy and adaptive learning-rate reduction on plateau are employed consistently across models, ensuring that differences in performance arise from architectural properties rather than optimization artefacts.
 
-To maintain reproducibility and comparability, the same stratified training–validation split and augmentation pipeline are used throughout. Importantly, augmentation is applied exclusively to the training set, preserving the validation set as a faithful proxy of the original data distribution.
+For comparability across architectures, all models are trained under the same experimental protocol (stratified split and fixed seed as in Sec. 1.2) and the same augmentation policy. Data augmentation is applied only to the training set, while the validation set is kept unaugmented to provide an unbiased estimate of in-distribution performance.
 
 \subsection{Hyperparameter Tuning and Final Model Selection}
 
