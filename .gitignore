@@ -71,7 +71,6 @@ temp/
 ######################################
 #LaTeX
 ######################################
-report.pdf
 report.synctex.gz
 report.aux
 report.log
