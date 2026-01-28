@@ -138,12 +138,12 @@ spatial structure of the hand gestures while reducing computational cost
 and memory requirements.
 
 Following resizing, pixel intensities were converted to floating-point
-format and normalized to the {[}0, 1{]} range. This normalization step
-was applied directly within the data pipeline rather than as a dedicated
-rescaling layer inside the models, ensuring consistent preprocessing
-across all architectures and simplifying model definitions.
-Normalization facilitates stable and efficient optimization by
-preventing large gradient magnitudes during training.
+format and normalized to the {[}0, 1{]} range, with the aim of facilitating
+stable and efficient optimization by preventing large gradient magnitudes 
+during training. This normalization step was applied directly within 
+the data pipeline rather than as a dedicated rescaling layer inside the 
+models, ensuring consistent preprocessing across all architectures and 
+simplifying model definitions.
 
 \subsection{Data Augmentation}
 
@@ -177,7 +177,7 @@ layers followed by max-pooling and a shallow fully connected head. The use
 of separable convolutions significantly reduces the number of trainable 
 parameters and computational cost, enforcing a strong inductive bias toward 
 learning coarse, low-level spatial patterns. A global average pooling layer 
-is employed before the dense classifier, further limiting the model[']s 
+is employed before the dense classifier, further limiting the model{'}s 
 capacity to memorize spatially localized features. As a result, model A 
 primarily captures global shape cues rather than fine-grained gesture details.
 
@@ -211,9 +211,9 @@ First, depthwise separable convolutions are employed extensively in models A and
 
 Second, Layer Normalization (LN) is used instead of Batch Normalization in model C. Since training is performed with relatively small batch sizes and with data augmentation enabled, LN provides more stable normalization statistics that are independent of batch composition. This choice improves convergence consistency and reduces sensitivity to batch-size variations during both tuning and final training.
 
-Third, progressive spatial downsampling is implemented via strided convolutions rather than aggressive pooling. This preserves more information during early stages while still reducing computational complexity, enabling the network to retain discriminative spatial cues relevant for fine-grained hand gesture recognition.
+Third, across all architectures (models A, B, and C), progressive spatial downsampling is implemented via strided convolutions rather than aggressive pooling. This preserves more information during early stages while still reducing computational complexity, enabling the networks to retain discriminative spatial cues relevant for fine-grained hand gesture recognition.
 
-At the classification stage, global average pooling replaces flattening, enforcing translation invariance and reducing the risk of overfitting by preventing the classifier from relying on specific spatial positions. A modest dropout rate is applied in the final dense layer to further discourage co-adaptation of high-level features.
+At the classification stage, all models adopt global average pooling in place of flattening, enforcing translation invariance and reducing the risk of overfitting by preventing the classifier from relying on specific spatial positions. In addition, a modest dropout rate is applied to the final dense layer across architectures to further discourage co-adaptation of high-level features.
 
 Finally, label smoothing is applied uniformly across all models. This choice regularizes the softmax outputs by preventing overconfident predictions, which is particularly important when models are evaluated under domain shift. In model C, the option to initialize output biases using empirical class priors further stabilizes early training dynamics and reduces class collapse effects observed in simpler architectures.
 
@@ -223,32 +223,6 @@ To make the notion of ``incremental complexity'' explicit, the architectures are
 Model~A is a lightweight baseline with 2{,}814 trainable parameters, reflecting the strong inductive bias induced by separable convolutions and a compact classification head.
 Model~B substantially increases capacity (249{,}331 trainable parameters), mainly due to the \texttt{Flatten}+\texttt{Dense} stage operating on high-dimensional feature maps.
 Model~C achieves a favorable capacity--efficiency trade-off with 45{,}523 trainable parameters by relying on depthwise-separable convolutions, residual blocks, and global average pooling, which together reduce parameter growth while enabling deeper hierarchical feature extraction.
-
-\paragraph{Prediction confidence on the validation set.}
-
-In addition to accuracy-based metrics, the distribution of predicted probabilities provides a coarse indicator of confidence calibration.
-On the validation set, the mean maximum softmax probability increases with model expressiveness (A: 0.59, B: 0.88, C: 0.93), while class-averaged predicted probabilities remain approximately balanced across classes, suggesting that performance gains are not driven by degenerate class priors.
-This diagnostic is later used to interpret robustness under domain shift (Section~4).
-
-For completeness, a summary of model capacity and confidence-related diagnostics is reported in Table~\ref{tab:model_capacity}.
-
-\begin{table}[h]
-\centering
-\caption{Model capacity and confidence-related diagnostics on the validation set.}
-\label{tab:model_capacity}
-\begin{tabular}{lccc}
-\hline
-\textbf{Model} &
-\textbf{Trainable parameters} &
-\textbf{Model size (trainable)} &
-\textbf{Val max-prob ($\mu \pm \sigma$)} \\
-\hline
-Model A & 2{,}814   & 11~KB   & $0.59 \pm 0.15$ \\
-Model B & 249{,}331 & 974~KB  & $0.88 \pm 0.11$ \\
-Model C & 45{,}523  & 178~KB  & $0.93 \pm 0.08$ \\
-\hline
-\end{tabular}
-\end{table}
 
 
 \subsection{Training Setup and Optimization Strategy}
@@ -260,6 +234,7 @@ For comparability across architectures, all models are trained under the same ex
 \subsection{Hyperparameter Tuning and Final Model Selection}
 
 Hyperparameter tuning is performed through a constrained grid search over learning rate, batch size, and augmentation settings. Rather than optimizing all architectures exhaustively, tuning focuses on identifying a robust configuration for the most expressive model, reflecting a realistic model selection workflow. Validation accuracy is used as the primary selection criterion, with early stopping ensuring efficient exploration of the search space.
+
 \section{Evaluation and Analysis}
 
 Building on the architectural comparison introduced in Section 2, this
@@ -392,6 +367,31 @@ moving from partial and class-dependent recognition in model A to stable
 and near-perfect classification in model C. This progression provides a
 principled justification for selecting model C as the final architecture
 for subsequent generalization analyses.
+
+\paragraph{Prediction confidence on the validation set.}
+In addition to accuracy-based metrics, the distribution of predicted probabilities provides a coarse \emph{proxy} of confidence calibration.
+On the validation set, the mean maximum softmax probability increases with model expressiveness (A: 0.59, B: 0.88, C: 0.93), while class-averaged predicted probabilities remain approximately balanced across classes, suggesting that performance gains are not driven by degenerate class priors.
+This diagnostic is later used to interpret robustness under domain shift (Section~4).
+
+Accordingly, for completeness, a summary of model capacity and confidence-related diagnostics is reported in Table~\ref{tab:model_capacity}.
+
+\begin{table}[h]
+\centering
+\caption{Model capacity and confidence-related diagnostics on the validation set.}
+\label{tab:model_capacity}
+\begin{tabular}{lccc}
+\hline
+\textbf{Model} &
+\textbf{Trainable parameters} &
+\textbf{Model size (trainable)} &
+\textbf{Val max-prob ($\mu \pm \sigma$)} \\
+\hline
+Model A & 2{,}814   & 11~KB   & $0.59 \pm 0.15$ \\
+Model B & 249{,}331 & 974~KB  & $0.88 \pm 0.11$ \\
+Model C & 45{,}523  & 178~KB  & $0.93 \pm 0.08$ \\
+\hline
+\end{tabular}
+\end{table}
 
 \subsection{Training Dynamics}
 
