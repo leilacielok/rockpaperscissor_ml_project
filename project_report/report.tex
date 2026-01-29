@@ -292,30 +292,13 @@ In particular, the results include:
 \end{enumerate}
 
 
-Additional outputs generated during training, such as intermediate
+As noted above, additional outputs generated during training, such as intermediate
 diagnostics, repeated misclassification grids for non-selected models,
 and inspection-level evaluations, are not discussed in this section, as
 their primary role is to support debugging and model development rather
 than comparative performance analysis. All such artifacts are
 nonetheless retained in the project repository to ensure reproducibility
 and methodological transparency.
-
-\bigskip
-\textbf{Evaluation Protocol}
-
-Model evaluation is based on a stratified hold-out validation strategy
-rather than k-fold cross-validation, which is computationally expensive
-for convolutional neural networks. The validation split is used for
-model selection and hyperparameter tuning, together with early stopping
-based on validation performance. Generalization is further assessed
-through evaluation on two external test sets, one in-distribution and
-one out-of-distribution, providing complementary evidence of robustness
-beyond the validation split.
-
-All experiments were conducted with architectures and input resolutions
-chosen to ensure reasonable computational cost in terms of both running
-time and memory footprint.
-
 
 \subsection{Performance Metrics}
 
