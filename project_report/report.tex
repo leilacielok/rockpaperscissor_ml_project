@@ -233,7 +233,27 @@ For comparability across architectures, all models are trained under the same ex
 
 \subsection{Hyperparameter Tuning and Final Model Selection}
 
-Hyperparameter tuning is performed through a constrained grid search over learning rate, batch size, and augmentation settings. Rather than optimizing all architectures exhaustively, tuning focuses on identifying a robust configuration for the most expressive model, reflecting a realistic model selection workflow. Validation accuracy is used as the primary selection criterion, with early stopping ensuring efficient exploration of the search space.
+Hyperparameter tuning was carried out through a constrained grid search 
+applied consistently across all three architectures (Models A, B, and C), 
+exploring a small set of high-impact training hyperparameters: learning 
+rate, batch size, and the use of data augmentation. For each architecture, 
+all combinations in the grid were trained using the same stratified 
+train--validation split, and model selection was based on validation 
+accuracy computed on the held-out validation set. Early stopping was 
+employed during each run to prevent overfitting and to limit unnecessary 
+computation once validation performance plateaued, enabling an efficient 
+yet systematic exploration of the search space. All trials were logged in 
+a dedicated results table (\texttt{tuning\_results.csv}), ensuring full 
+reproducibility and allowing direct comparison across architectures under 
+matched tuning conditions. The final model was selected as the overall 
+best-performing configuration across the entire grid: Model C trained 
+with learning rate $3\times 10^{-4}$, batch size 16, and augmentation 
+disabled achieved the highest validation accuracy observed during 
+tuning. This best configuration was subsequently used for a clean final 
+training run with checkpointing and evaluation artefacts generated 
+accordingly. A detailed comparison of validation performance across 
+architectures and the resulting model ranking is presented in Section 3.
+
 
 \section{Evaluation and Analysis}
 
