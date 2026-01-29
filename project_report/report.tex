@@ -307,7 +307,7 @@ metrics, including accuracy, precision, recall, and F1-score, computed
 on a held-out validation set. Each metric captures a different and
 complementary aspect of predictive behaviour, allowing a comprehensive
 view of both predictive quality and learning behaviour and a nuanced
-comparison across architectures beyond overall correctness. While
+comparison across architectures beyond accuracy alone. While
 accuracy summarizes overall correctness, precision and recall capture
 complementary aspects of class-specific performance: precision reflects
 the model's ability to avoid false positive assignments, whereas recall
@@ -484,20 +484,25 @@ confidence to an incorrect prediction. Such errors are particularly
 relevant, as they reveal systematic confusions in the learned
 representation rather than borderline or noisy instances.
 Representative misclassified examples for each final architecture are 
-shown in Figure~X (models A–C), ordered by decreasing prediction 
+shown in Figures~\ref{fig:app_misclf_A}, ~\ref{fig:app_misclf_B} and
+~\ref{fig:app_misclf_C} (models A–C), ordered by decreasing prediction 
 confidence.
 
 The qualitative patterns observed differ substantially across
-architectures. For model A, misclassifications are relatively frequent
-and exhibit limited structural coherence. Errors span multiple class
-pairs and often involve gestures that are visually canonical but
-insufficiently captured by the model's low-capacity feature
-representations. In several cases, the model assigns moderate to high
-confidence to incorrect predictions, indicating that it relies on
-incomplete or misleading visual cues rather than on robust
-class-defining features. This behaviour is consistent with the
-quantitative results and with the training dynamics observed for model
-A, and provides further evidence of underfitting.
+architectures. For Model A, misclassifications are relatively frequent 
+and show limited structural coherence, consistently with the uneven class-wise 
+recall reported in Section 3.1. In practical terms, the “missed detections” 
+highlighted by the metrics manifest here as a systematic tendency to 
+collapse paper and scissors into the rock class: among the most confident 
+errors, many true paper and scissors instances are predicted as rock, 
+often with high confidence, suggesting reliance on incomplete or misleading 
+cues (e.g., coarse hand silhouette and background contrast) rather than 
+robust class-defining features. Conversely, true rock appears only rarely 
+in this subset, and when it is misclassified it tends to be predicted as 
+scissors, indicating an asymmetric error profile where paper and scissors 
+are the more challenging classes for this low-capacity representation. 
+Overall, these high-confidence mistakes align with the quantitative results 
+and training dynamics for Model A, providing further evidence of underfitting.
 
 For model B, misclassified examples become markedly fewer and more
 structured. Errors are primarily associated with visually ambiguous
