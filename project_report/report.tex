@@ -205,31 +205,69 @@ semantic information rather than localized activations.
 
 \subsection{Architectural Design Choices and Technical Rationale}
 
-Several design decisions were made to ensure training stability, fair comparison, and robustness, particularly given the relatively small size and homogeneity of the training dataset.
+Several design decisions were made to ensure training stability, fair comparison, 
+and robustness, particularly given the relatively small size and homogeneity of 
+the training dataset.
 
-First, depthwise separable convolutions are employed extensively in models A and C. This choice reduces parameter count while preserving the ability to model spatial structure, making it well-suited for scenarios where overfitting is a concern. In model C, separable convolutions are combined with residual connections, allowing gradients to propagate effectively through deeper stacks of layers and mitigating degradation effects commonly observed in deeper CNNs.
+First, depthwise separable convolutions are employed extensively in models A and C. 
+This choice reduces parameter count while preserving the ability to model spatial 
+structure, making it well-suited for scenarios where overfitting is a concern. In 
+model C, separable convolutions are combined with residual connections, allowing 
+gradients to propagate effectively through deeper stacks of layers and mitigating 
+degradation effects commonly observed in deeper CNNs.
 
-Second, Layer Normalization (LN) is used instead of Batch Normalization in model C. Since training is performed with relatively small batch sizes and with data augmentation enabled, LN provides more stable normalization statistics that are independent of batch composition. This choice improves convergence consistency and reduces sensitivity to batch-size variations during both tuning and final training.
+Second, Layer Normalization (LN) is used instead of Batch Normalization in model C. 
+Since training is performed with relatively small batch sizes and with data augmentation 
+enabled, LN provides more stable normalization statistics that are independent of batch 
+composition. This choice improves convergence consistency and reduces sensitivity to 
+batch-size variations during both tuning and final training.
 
-Third, across all architectures (models A, B, and C), progressive spatial downsampling is implemented via strided convolutions rather than aggressive pooling. This preserves more information during early stages while still reducing computational complexity, enabling the networks to retain discriminative spatial cues relevant for fine-grained hand gesture recognition.
+Third, across all architectures (models A, B, and C), progressive spatial downsampling 
+is implemented via strided convolutions rather than aggressive pooling. This preserves 
+more information during early stages while still reducing computational complexity, 
+enabling the networks to retain discriminative spatial cues relevant for fine-grained 
+hand gesture recognition.
 
-At the classification stage, all models adopt global average pooling in place of flattening, enforcing translation invariance and reducing the risk of overfitting by preventing the classifier from relying on specific spatial positions. In addition, a modest dropout rate is applied to the final dense layer across architectures to further discourage co-adaptation of high-level features.
+At the classification stage, all models adopt global average pooling in place of flattening, 
+enforcing translation invariance and reducing the risk of overfitting by preventing the 
+classifier from relying on specific spatial positions. In addition, a modest dropout rate 
+is applied to the final dense layer across architectures to further discourage co-adaptation 
+of high-level features.
 
-Finally, label smoothing is applied uniformly across all models. This choice regularizes the softmax outputs by preventing overconfident predictions, which is particularly important when models are evaluated under domain shift. In model C, the option to initialize output biases using empirical class priors further stabilizes early training dynamics and reduces class collapse effects observed in simpler architectures.
+Finally, label smoothing is applied uniformly across all models. This choice regularizes the 
+softmax outputs by preventing overconfident predictions, which is particularly important when 
+models are evaluated under domain shift. In model C, the option to initialize output biases 
+using empirical class priors further stabilizes early training dynamics and reduces class 
+collapse effects observed in simpler architectures.
 
 \paragraph{Model capacity and parameterization.}
 
-To make the notion of ``incremental complexity'' explicit, the architectures are also compared in terms of trainable parameter count.
-Model~A is a lightweight baseline with 2{,}814 trainable parameters, reflecting the strong inductive bias induced by separable convolutions and a compact classification head.
-Model~B substantially increases capacity (249{,}331 trainable parameters), mainly due to the \texttt{Flatten}+\texttt{Dense} stage operating on high-dimensional feature maps.
-Model~C achieves a favorable capacity--efficiency trade-off with 45{,}523 trainable parameters by relying on depthwise-separable convolutions, residual blocks, and global average pooling, which together reduce parameter growth while enabling deeper hierarchical feature extraction.
+To make the notion of ``incremental complexity'' explicit, the architectures 
+are also compared in terms of trainable parameter count.
+Model~A is a lightweight baseline with 2{,}814 trainable parameters, reflecting 
+the strong inductive bias induced by separable convolutions and a compact 
+classification head.
+Model~B substantially increases capacity (249{,}331 trainable parameters), 
+mainly due to the \texttt{Flatten}+\texttt{Dense} stage operating on high-dimensional 
+feature maps.
+Model~C achieves a favorable capacity--efficiency trade-off with 45{,}523 trainable 
+parameters by relying on depthwise-separable convolutions, residual blocks, and global 
+average pooling, which together reduce parameter growth while enabling deeper 
+hierarchical feature extraction.
 
 
 \subsection{Training Setup and Optimization Strategy}
 
-All architectures are trained using the Adam optimizer with architecture-specific learning rates selected through targeted tuning. Early stopping based on validation accuracy and adaptive learning-rate reduction on plateau are employed consistently across models, ensuring that differences in performance arise from architectural properties rather than optimization artefacts.
+All architectures are optimized with the Adam optimizer. Training is regularized through early stopping
+monitored on validation accuracy and by an adaptive learning-rate schedule (ReduceLROnPlateau),
+which lowers the learning rate when validation performance stagnates. These mechanisms improve
+training stability and reduce unnecessary computation once progress plateaus.
 
-For comparability across architectures, all models are trained under the same experimental protocol (stratified split and fixed seed as in Sec. 1.2) and the same augmentation policy. Data augmentation is applied only to the training set, while the validation set is kept unaugmented to provide an unbiased estimate of in-distribution performance.
+To ensure a fair comparison across architectures, all models follow the same experimental protocol,
+including the stratified split and fixed seed (Sec.~1.2) and the tuning procedure used to select
+architecture-specific learning rates and related settings (Sec.~2.4). Data augmentation is applied to the
+training set only, while the validation set is kept unaugmented to provide an unbiased estimate of
+in-distribution performance.
 
 \subsection{Hyperparameter Tuning and Final Model Selection}
 
