@@ -324,5 +324,5 @@ These files are **binary** and cannot be previewed on GitHub, but can be reloade
 -----
 > *Future Work suggestions*
 > - Extend dataset with more hand gestures;
-> - Test transfer learning with pretrained CNNs (MobileNet, ResNet, etc.);
+> - Test the use of pretrained CNN models to improve generalization;
 > - Deploy as a web app for interactive play.
