@@ -475,7 +475,7 @@ generalization within the validation distribution.
 \end{figure}
 
 For the baseline architecture A, both training and validation loss
-decrease smoothly during the initial epochs but quickly reach a plateau,
+decrease smoothly during the initial epochs and gradually approach a plateau, 
 while accuracy saturates at relatively low values. The absence of a
 widening gap between training and validation curves indicates that the
 model does not overfit the data. Instead, the early stagnation of
@@ -497,8 +497,8 @@ to learn more expressive features without sacrificing generalization,
 leading to consistent improvements in both error reduction and
 predictive accuracy.
 
-Model C shows similarly smooth and stable convergence, but with faster
-attainment of high accuracy and lower final loss values. Training and
+Model C shows similarly smooth and stable convergence,but with more rapid 
+early error reduction and lower final loss values. Training and
 validation curves remain tightly coupled, with only a minimal and
 non-systematic generalization gap. This behaviour indicates that the
 increased model capacity is effectively controlled through
@@ -529,7 +529,26 @@ computed as the maximum softmax probability associated with the model's
 output. This allows misclassifications to be inspected not only in terms
 of correctness, but also in terms of model confidence.
 
-In practice, misclassified samples are ranked according to their
+To provide a compact overview of class-level error patterns before moving to
+instance-level inspection, Figure~\ref{fig:confusion_matrices} reports the
+validation confusion matrices for the three final architectures. These
+matrices summarize how misclassifications are distributed across classes and
+offer a global complement to the analysis presented below.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.32\linewidth]{model_A_final/val_confusion_matrix.png}
+\hfill
+\includegraphics[width=0.32\linewidth]{model_B_final/val_confusion_matrix.png}
+\hfill
+\includegraphics[width=0.32\linewidth]{model_C_final/val_confusion_matrix.png}
+\caption{Validation confusion matrices for the three final architectures
+(models A--C).}
+\label{fig:confusion_matrices}
+\end{figure}
+
+
+Misclassified samples are ranked according to their
 prediction confidence and a fixed number of the most confident errors is
 selected for qualitative inspection. This design choice focuses the analysis on the most
 informative failure cases, namely those in which the model assigns high
@@ -537,14 +556,14 @@ confidence to an incorrect prediction. Such errors are particularly
 relevant, as they reveal systematic confusions in the learned
 representation rather than borderline or noisy instances.
 Representative misclassified examples for each final architecture are 
-shown in Figures~\ref{fig:app_misclf_A}, ~\ref{fig:app_misclf_B} and
-~\ref{fig:app_misclf_C} (models A–C), ordered by decreasing prediction 
+shown in the Appendix, through Figures~\ref{fig:app_misclf_A}, ~\ref{fig:app_misclf_B} and
+~\ref{fig:app_misclf_C}, ordered by decreasing prediction 
 confidence.
 
 The qualitative patterns observed differ substantially across
-architectures. For Model A, misclassifications are relatively frequent 
-and show limited structural coherence, consistently with the uneven class-wise 
-recall reported in Section 3.1. In practical terms, the “missed detections” 
+architectures. For Model A, misclassifications are relatively frequent and exhibit a coarse
+but systematic structure, consistently with the uneven class-wise recall
+reported in Section 3.1. In practical terms, the “missed detections” 
 highlighted by the metrics manifest here as a systematic tendency to 
 collapse paper and scissors into the rock class: among the most confident 
 errors, many true paper and scissors instances are predicted as rock, 
