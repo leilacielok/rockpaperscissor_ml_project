@@ -452,27 +452,24 @@ Model C & 45{,}523  & 178~KB  & $0.93 \pm 0.08$ \\
 \subsection{Training Dynamics}
 
 Training dynamics were analysed by jointly examining the evolution of
-loss and accuracy on both the training and validation sets. These curves
-are reported in Figures~\ref{fig:training_accuracy} and~\ref{fig:training_loss}
-and provide insight into how each architecture learns over time, whether
-performance improvements arise from genuine feature learning or from
-overfitting, and how effectively optimization translates into
-generalization within the validation distribution.
+loss and accuracy on both the training and validation sets. 
+Figure~\ref{fig:training_curves} provides insight into 
+how each architecture learns over time, whether performance improvements 
+arise from genuine feature learning or from overfitting, and how effectively 
+optimization translates into generalization within the validation distribution.
 
 
-\begin{figure}[h]
+\begin{figure}[htbp]
 \centering
 \includegraphics[width=\linewidth]{fig_training_accuracy_all_models.png}
-\caption{Training and validation accuracy curves for the three final architectures.}
-\label{fig:training_accuracy}
+
+\vspace{0.5cm}
+
+\includegraphics[width=\linewidth]{fig_training_loss_all_models.png}
+\caption{Training and validation accuracy (top) and loss (bottom) curves for the three final architectures.}
+\label{fig:training_curves}
 \end{figure}
 
-\begin{figure}[h]
-\centering
-\includegraphics[width=\linewidth]{fig_training_loss_all_models.png}
-\caption{Training and validation loss curves for the three final architectures.}
-\label{fig:training_loss}
-\end{figure}
 
 For the baseline architecture A, both training and validation loss
 decrease smoothly during the initial epochs and gradually approach a plateau, 
