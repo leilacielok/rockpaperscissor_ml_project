@@ -240,6 +240,13 @@ models are evaluated under domain shift. In model C, the option to initialize ou
 using empirical class priors further stabilizes early training dynamics and reduces class 
 collapse effects observed in simpler architectures.
 
+\paragraph{Training optimization and regularization.}
+Across all architectures, optimization is performed with the Adam optimizer. Training is 
+regularized through early stopping monitored on validation accuracy and an adaptive 
+learning-rate schedule (ReduceLROnPlateau), which lowers the learning rate when validation 
+performance stagnates. Together, these mechanisms improve training stability and convergence
+behaviour, while limiting unnecessary computation once progress plateaus.
+
 \paragraph{Model capacity and parameterization.}
 
 To make the notion of ``incremental complexity'' explicit, the architectures 
@@ -255,19 +262,6 @@ parameters by relying on depthwise-separable convolutions, residual blocks, and 
 average pooling, which together reduce parameter growth while enabling deeper 
 hierarchical feature extraction.
 
-
-\subsection{Training Setup and Optimization Strategy}
-
-All architectures are optimized with the Adam optimizer. Training is regularized through early stopping
-monitored on validation accuracy and by an adaptive learning-rate schedule (ReduceLROnPlateau),
-which lowers the learning rate when validation performance stagnates. These mechanisms improve
-training stability and reduce unnecessary computation once progress plateaus.
-
-To ensure a fair comparison across architectures, all models follow the same experimental protocol,
-including the stratified split and fixed seed (Sec.~1.2) and the tuning procedure used to select
-architecture-specific learning rates and related settings (Sec.~2.4). Data augmentation is applied to the
-training set only, while the validation set is kept unaugmented to provide an unbiased estimate of
-in-distribution performance.
 
 \subsection{Hyperparameter Tuning and Final Model Selection}
 
