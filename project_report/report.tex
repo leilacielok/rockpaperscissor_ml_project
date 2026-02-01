@@ -553,7 +553,7 @@ confidence to an incorrect prediction. Such errors are particularly
 relevant, as they reveal systematic confusions in the learned
 representation rather than borderline or noisy instances.
 Representative misclassified examples for each final architecture are 
-shown in the Appendix, through Figures~\ref{fig:app_misclf_A}, ~\ref{fig:app_misclf_B} and
+shown in the Appendix, Figures~\ref{fig:app_misclf_A}, ~\ref{fig:app_misclf_B} and
 ~\ref{fig:app_misclf_C}, ordered by decreasing prediction 
 confidence.
 
@@ -582,7 +582,7 @@ suggesting that the model exhibits increased uncertainty when confronted
 with borderline cases rather than systematically misinterpreting them.
 This pattern reflects a more refined internal representation of gesture
 classes and aligns with the balanced precision--recall improvements
-observed in the quantitative evaluation
+observed in the quantitative evaluation.
 
 Misclassifications for model C are rare and highly localized. When
 present, they almost exclusively involve intrinsically ambiguous images
@@ -638,16 +638,13 @@ together with the rarity and structure of residual errors, suggest that
 the model operates in a regime of effective capacity rather than
 over-parameterization. Consequently, the selected architecture 
 demonstrates robustness under in-distribution conditions. 
-More broadly, the comparison across models highlights the central role 
-of architectural capacity in determining whether a model underfits, 
-generalizes effectively, or risks overfitting.
 
 
 \section{Generalization Test}
 \subsection{External In-Distribution Evaluation}
 
 In order to disentangle generalization within the same acquisition
-domain from robustness to genuine domain shift, the final model (model
+domain from robustness to genuine domain shift, the best model (model
 C) was additionally evaluated on the \emph{rps-cv-images} dataset. This
 dataset is external to the training and validation splits, but shares
 similar characteristics in terms of background, lighting conditions, and
@@ -661,12 +658,9 @@ classes.
 Detailed quantitative results, including the classification report and 
 confusion matrix, are provided in Appendix~B.
 
-
 These results confirm that the selected architecture generalizes
 extremely well to unseen data drawn from the same underlying
-distribution. Consequently, the performance degradation observed on the
-custom dataset can be attributed primarily to domain shift rather than
-to overfitting or instability of the learned representations.
+distribution. 
 
 \subsection{External Out-of-Distribution Evaluation}
 \subsubsection{Custom Dataset description}
@@ -714,42 +708,78 @@ collapses almost entirely onto \emph{scissors} (predicted prior $\approx$
 still substantial preference for the same class.
 
 This behaviour is reflected in their confusion matrices and per-class
-metrics, where \emph{scissors} achieves comparatively high recall at the
-expense of \emph{rock} and especially \emph{paper}, whose recall drops
-to near-zero values. The corresponding misclassified-image grids further
-reveal that, under domain shift, visually ambiguous \emph{rock} and
-\emph{paper} gestures are consistently mapped to \emph{scissors} with
-high confidence, indicating that simpler architectures tend to default
-to the most visually distinctive class when uncertainty increases.
+metrics, where \emph{scissors} achieves comparatively higher F1-scores
+than \emph{rock} and especially \emph{paper} for models A and B, with
+\emph{paper} being strongly penalized (Table~\ref{tab:custom_eval_f1_per_class}).
+This pattern indicates that, under domain shift, the simpler architectures
+systematically favour the most visually distinctive class, improving
+performance on \emph{scissors} at the expense of degraded discrimination
+between \emph{rock} and \emph{paper}. The corresponding misclassified-image
+grids further reveal that visually ambiguous \emph{rock} and \emph{paper}
+gestures are consistently mapped to \emph{scissors} with high confidence,
+supporting the interpretation of a bias-driven error structure rather than
+class-specific noise.
+
+\begin{table}[h]
+\centering
+\caption{Per-class F1-score on the custom hand-gesture dataset.}
+\label{tab:custom_eval_f1_per_class}
+\begin{tabular}{lccc}
+\hline
+Model & F1 (rock) & F1 (paper) & F1 (scissors) \\
+\hline
+A & 0.318 & 0.077 & 0.455 \\
+B & 0.188 & 0.167 & 0.382 \\
+C & 0.458 & 0.509 & 0.364 \\
+\hline
+\end{tabular}
+\end{table}
 
 Model C, while not immune to domain shift, substantially mitigates this
-failure mode. Its predictions are distributed across all three classes,
-yielding higher overall accuracy and macro F1-score, and a confusion
-matrix that preserves meaningful structure rather than degenerating into
-a single-class predictor. Although the mean predicted prior for
-\emph{scissors} is close to zero before recalibration, the confusion
-matrix confirms that \emph{scissors} is still actively predicted, albeit
-with lower confidence, pointing to a calibration issue rather than a
-hard classification collapse. 
-The systematic class collapse observed for models A and B, and its 
-mitigation in model C, are clearly illustrated by the confusion matrices 
-reported in Appendix~C (Figure~\ref{fig:app_custom_confusion_combined}).
+failure mode. In terms of top-1 decisions, it avoids degenerating into a
+single-class predictor and yields higher overall accuracy and macro F1-score,
+with a confusion matrix that preserves meaningful structure. 
+Although the average predicted probability assigned to 
+\emph{scissors} is close to zero before recalibration (Appendix~C, 
+Table~\ref{tab:app_custom_pred_priors}), the confusion matrix 
+shows that the model still assigns \emph{scissors} as the top-1 label for 
+some samples. This indicates a calibration/score-shift effect, rather than a complete 
+collapse in which the argmax always selects a single class.
+
+These trends are summarized quantitatively by the macro-averaged evaluation 
+metrics reported in Table~\ref{tab:custom_eval_metrics} and are visually 
+corroborated by the confusion matrices in Appendix~C 
+(Figure~\ref{fig:app_custom_confusion_combined}), which clearly illustrate the 
+systematic class collapse observed for models A and B and its mitigation in model C.
+
+\begin{table}[h]
+\centering
+\caption{Custom hand-gesture dataset evaluation by model. Metrics are macro-averaged over classes.}
+\label{tab:custom_eval_metrics}
+\begin{tabular}{lcccc}
+\hline
+Model & Accuracy & Macro Precision & Macro Recall & Macro F1 \\
+\hline
+A & 0.338 & 0.311 & 0.334 & 0.283 \\
+B & 0.279 & 0.279 & 0.277 & 0.246 \\
+C & 0.456 & 0.488 & 0.458 & 0.444 \\
+\hline
+\end{tabular}
+\end{table}
 
 
 Overall, these results suggest that increased representational capacity
 and architectural regularization improve robustness to real-world
 variability, while also highlighting the intrinsic difficulty of
 reliably distinguishing hand gestures under uncontrolled acquisition
-conditions. This behaviour is further characterized by the mean predicted 
-class priors reported in Appendix~C (Table~\ref{tab:app_custom_pred_priors}).
-
+conditions. 
 
 \section{Conclusion and Future Work}
 
-This project investigated the effectiveness of convolutional neural
-networks of increasing architectural complexity for the classification
-of hand gesture images representing rock, paper, and scissors. Through a
-systematic comparison of three CNN architectures trained under identical
+This project investigated the effectiveness of convolutional neural networks 
+with increasing architectural complexity for classifying hand-gesture 
+images representing rock, paper, and scissors. Through a systematic 
+comparison of three CNN architectures trained under identical
 optimization settings, the analysis demonstrated a clear relationship
 between model capacity and predictive performance. While the baseline
 architecture exhibited signs of underfitting and limited discriminative
@@ -766,7 +796,7 @@ acquisition conditions, leading to highly skewed predictions and poor
 class balance. In contrast, the most expressive model retained a more
 structured decision behaviour and substantially mitigated this failure
 mode, although some degradation in confidence calibration remained.
-These findings highlight that strong validation performance alone is not
+These findings highlight that strong in-distribution validation performance alone is not
 sufficient to guarantee robustness in real-world scenarios and
 underscore the importance of explicitly evaluating models under
 out-of-distribution conditions.
@@ -777,14 +807,18 @@ intentionally small and qualitative in nature, preventing statistically
 robust performance estimates. Moreover, all models were trained
 exclusively on a curated dataset, without the use of advanced data
 augmentation strategies or domain adaptation techniques that could
-further enhance robustness. Future work could therefore explore the
-impact of more aggressive augmentation pipelines, the inclusion of
-real-world images during training, or transfer learning approaches to
-improve generalization. Additionally, investigating probabilistic
-calibration methods and confidence-aware decision mechanisms could help
+further enhance robustness. 
+Future work could therefore explore the impact of more aggressive augmentation
+pipelines and the inclusion of real-world images during training to improve
+generalization under domain shift. Additionally, future experiments could
+evaluate the use of models pretrained on large image datasets to further
+enhance robustness in out-of-distribution settings. Investigating probabilistic
+calibration methods and confidence-aware decision mechanisms could also help
 address residual uncertainty when models are deployed in unconstrained
 environments.
-
+From an application perspective, the final model could be deployed as a
+lightweight web application enabling interactive rock--paper--scissors play
+and real-time qualitative evaluation.
 
 \appendix
 \section*{Appendix}
