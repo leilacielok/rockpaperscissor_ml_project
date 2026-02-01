@@ -194,9 +194,6 @@ NO_TUNING = False                 # set True to skip tuning
    - Generate external classification report and confusion matrix
    - Does **not** retrain or modify the models
 
-4. **Check outputs**:
-   - reports/summary.csv: validation results for each model 
-   - Confusion matrices, learning curves, misclassified samples
 
 --- 
 ## 📁 Reports & Outputs
