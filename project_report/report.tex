@@ -155,10 +155,11 @@ unrealistic distortions, given the already constrained nature of the
 dataset.
 
 Specifically, the training pipeline includes random horizontal flips,
-small rotations, zooming, translations, and slight contrast adjustments.
-These transformations are applied on-the-fly and exclusively to the
-training set, ensuring that validation data remains untouched and
-representative of the original distribution. This strategy allows the
+small rotations, zooming, translations, and slight contrast adjustments, 
+applied exclusively to the training set to ensure that validation data remains untouched and
+representative of the original distribution. These transformations are applied
+on-the-fly at batch loading time, meaning that each epoch exposes the model 
+to a different randomized version of the same training samples. This strategy allows the
 models to learn more robust feature representations while preserving a
 fair and unbiased evaluation protocol.
 
