@@ -178,31 +178,55 @@ layers followed by max-pooling and a shallow fully connected head. The use
 of separable convolutions significantly reduces the number of trainable 
 parameters and computational cost, enforcing a strong inductive bias toward 
 learning coarse, low-level spatial patterns. A global average pooling layer 
-is employed before the dense classifier, further limiting the model{'}s 
+is employed before the dense classifier, further limiting the model's 
 capacity to memorize spatially localized features. As a result, model A 
 primarily captures global shape cues rather than fine-grained gesture details.
 
 Model B represents a modest increase in expressiveness and corresponds to 
 a conventional shallow CNN. It employs standard convolutional layers 
 followed by max-pooling and a fully connected classifier operating on 
-flattened feature maps. Compared to model A, this design increases 
-parameter count and spatial flexibility but lacks explicit architectural 
+flattened feature maps. Compared to model A, this design substantially increases 
+parameter count and spatial flexibility, but lacks explicit architectural 
 regularization mechanisms beyond implicit constraints imposed by depth 
-and pooling. This makes model B more expressive but also more sensitive 
-to distributional shifts, as later evidenced in the out-of-distribution 
-evaluation.
+and pooling. This makes model B more expressive but also more prone to 
+sesitivity under distributional shifts, as later evidenced in the 
+out-of-distribution evaluation.
 
 Model C is a custom-designed architecture optimized for stable training 
 and robust feature extraction under constrained data regimes. It combines 
 depthwise separable convolutions, residual connections, and progressive 
 spatial downsampling within a fully convolutional backbone. The network 
 is organized into stages operating at decreasing spatial resolutions 
-(48×48, 24×24, 12×12), allowing it to learn hierarchical representations 
-ranging from local edge-like features to more abstract, gesture-level 
+(48$\times$48, 24$\times$24, 12$\times$12), enabling the learning of hierarchical 
+representations ranging from local edge-like features to more abstract, gesture-level 
 patterns. A global average pooling head followed by a compact dense 
 layer ensures that classification decisions are based on aggregated 
 semantic information rather than localized activations.
 
+For completeness, Table~\ref{tab:model_capacity} summarizes the resulting
+differences in model capacity across architectures. Notably, while Model B
+exhibits a substantially larger number of trainable parameters due to its
+fully connected classifier, Model C achieves greater architectural
+expressiveness with a markedly smaller parameter footprint, highlighting
+the role of architectural design in achieving parameter-efficient
+representation learning.
+
+\begin{table}[h]
+\centering
+\caption{Model capacity comparison across architectures.}
+\label{tab:model_capacity}
+\begin{tabular}{lcc}
+\hline
+\textbf{Model} &
+\textbf{Trainable parameters} &
+\textbf{Model size (trainable)} \\
+\hline
+Model A & 2{,}814   & 11~KB  \\
+Model B & 249{,}331 & 974~KB \\
+Model C & 45{,}523  & 178~KB \\
+\hline
+\end{tabular}
+\end{table}
 
 \subsection{Architectural Design Choices and Technical Rationale}
 
@@ -426,26 +450,23 @@ principled justification for selecting model C as the final architecture
 for subsequent generalization analyses.
 
 \paragraph{Prediction confidence on the validation set.}
-In addition to accuracy-based metrics, the distribution of predicted probabilities provides a coarse \emph{proxy} of confidence calibration.
+In addition to accuracy-based metrics, the distribution of predicted probabilities provides a coarse \emph{proxy} for confidence calibration.
 On the validation set, the mean maximum softmax probability increases with model expressiveness (A: 0.59, B: 0.88, C: 0.93), while class-averaged predicted probabilities remain approximately balanced across classes, suggesting that performance gains are not driven by degenerate class priors.
 This diagnostic is later used to interpret robustness under domain shift (Section~4).
-
-Accordingly, for completeness, a summary of model capacity and confidence-related diagnostics is reported in Table~\ref{tab:model_capacity}.
+For completeness, validation-set confidence diagnostics are summarized in Table~\ref{tab:confidence_diagnostics}.
 
 \begin{table}[h]
 \centering
-\caption{Model capacity and confidence-related diagnostics on the validation set.}
-\label{tab:model_capacity}
-\begin{tabular}{lccc}
+\caption{Prediction confidence diagnostics on the validation set.}
+\label{tab:confidence_diagnostics}
+\begin{tabular}{lc}
 \hline
 \textbf{Model} &
-\textbf{Trainable parameters} &
-\textbf{Model size (trainable)} &
 \textbf{Val max-prob ($\mu \pm \sigma$)} \\
 \hline
-Model A & 2{,}814   & 11~KB   & $0.59 \pm 0.15$ \\
-Model B & 249{,}331 & 974~KB  & $0.88 \pm 0.11$ \\
-Model C & 45{,}523  & 178~KB  & $0.93 \pm 0.08$ \\
+Model A & $0.59 \pm 0.15$ \\
+Model B & $0.88 \pm 0.11$ \\
+Model C & $0.93 \pm 0.08$ \\
 \hline
 \end{tabular}
 \end{table}
