@@ -203,13 +203,11 @@ patterns. A global average pooling head followed by a compact dense
 layer ensures that classification decisions are based on aggregated 
 semantic information rather than localized activations.
 
-For completeness, Table~\ref{tab:model_capacity} summarizes the resulting
-differences in model capacity across architectures. Notably, while Model B
-exhibits a substantially larger number of trainable parameters due to its
-fully connected classifier, Model C achieves greater architectural
-expressiveness with a markedly smaller parameter footprint, highlighting
-the role of architectural design in achieving parameter-efficient
-representation learning.
+\paragraph{Model capacity and parameterization.}
+
+To make the notion of ``incremental complexity'' explicit, the architectures
+are compared in terms of trainable parameter count and model size, as reported in
+Table~\ref{tab:model_capacity}.
 
 \begin{table}[h]
 \centering
@@ -227,6 +225,17 @@ Model C & 45{,}523  & 178~KB \\
 \hline
 \end{tabular}
 \end{table}
+
+Model~A is a lightweight baseline with 2{,}814 trainable parameters, reflecting 
+the strong inductive bias induced by separable convolutions and a compact 
+classification head.
+Model~B substantially increases capacity (249{,}331 trainable parameters), 
+primarily due to the \texttt{Flatten}+\texttt{Dense} stage operating on high-dimensional 
+feature maps.
+Model~C achieves a favorable capacity--efficiency trade-off with 45{,}523 trainable 
+parameters by relying on depthwise-separable convolutions, residual blocks, and global 
+average pooling, which together reduce parameter growth while enabling deeper 
+hierarchical feature extraction.
 
 \subsection{Architectural Design Choices and Technical Rationale}
 
@@ -271,21 +280,6 @@ regularized through early stopping monitored on validation accuracy and an adapt
 learning-rate schedule (ReduceLROnPlateau), which lowers the learning rate when validation 
 performance stagnates. Together, these mechanisms improve training stability and convergence
 behaviour, while limiting unnecessary computation once progress plateaus.
-
-\paragraph{Model capacity and parameterization.}
-
-To make the notion of ``incremental complexity'' explicit, the architectures 
-are also compared in terms of trainable parameter count.
-Model~A is a lightweight baseline with 2{,}814 trainable parameters, reflecting 
-the strong inductive bias induced by separable convolutions and a compact 
-classification head.
-Model~B substantially increases capacity (249{,}331 trainable parameters), 
-mainly due to the \texttt{Flatten}+\texttt{Dense} stage operating on high-dimensional 
-feature maps.
-Model~C achieves a favorable capacity--efficiency trade-off with 45{,}523 trainable 
-parameters by relying on depthwise-separable convolutions, residual blocks, and global 
-average pooling, which together reduce parameter growth while enabling deeper 
-hierarchical feature extraction.
 
 
 \subsection{Hyperparameter Tuning and Final Model Selection}
