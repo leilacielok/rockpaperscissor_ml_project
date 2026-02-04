@@ -378,19 +378,19 @@ In particular, the results include:
 \item
   a quantitative comparison across architectures based on validation
   performance, including accuracy, precision, recall, and F1-score, used
-  to support model selection (Section 3.1);
+  to support model selection (Section 4.1);
 \item
   an analysis of training dynamics through loss and accuracy curves on
   both training and validation sets, providing insight into convergence
-  behaviour and learning stability (Section 3.2);
+  behaviour and learning stability (Section 4.2);
 \item
   a qualitative analysis of misclassified validation examples, aimed at
   identifying systematic error patterns and model-specific failure modes
-  (Section 3.3);
+  (Section 4.3);
 \item
   an integrated assessment of overfitting and underfitting, based on
   performance metrics, learning curves, and error structure (Section
-  3.4).
+  4.4).
 \end{enumerate}
 
 
@@ -469,12 +469,13 @@ generalizes effectively within the in-distribution validation setting.
 Taken together, these results demonstrate that increasing architectural
 expressiveness translates into progressively better error control,
 moving from partial and class-dependent recognition in model A to stable
-and near-perfect classification in model C. This progression provides a
+and virtually perfect classification in model C. This progression provides a
 principled justification for selecting model C as the final architecture
 for subsequent generalization analyses.
 
 \paragraph{Prediction confidence on the validation set.}
 In addition to accuracy-based metrics, the distribution of predicted probabilities provides a coarse \emph{proxy} for confidence calibration.
+Although this does not constitute a formal calibration assessment (e.g., ECE), it provides a coarse indicator of predictive confidence.
 On the validation set, the mean maximum softmax probability increases with model expressiveness (A: 0.59, B: 0.88, C: 0.93), while class-averaged predicted probabilities remain approximately balanced across classes, suggesting that performance gains are not driven by degenerate class priors.
 This diagnostic is later used to interpret robustness under domain shift (Section~4).
 For completeness, validation-set confidence diagnostics are summarized in Table~\ref{tab:confidence_diagnostics}.
@@ -713,7 +714,7 @@ distribution.
 
 The custom dataset used for the out-of-distribution evaluation consists
 of a small collection of hand gesture images representing the three
-target classes (\emph{rock}, \emph{paper}, and \emph{scissors}),
+target classes (23 images for \emph{rock} and \emph{scissors}, 22 images for \emph{paper}),
 acquired outside the original training distribution. The images were
 captured using consumer-grade devices under unconstrained conditions and
 include hands belonging to multiple individuals rather than a single

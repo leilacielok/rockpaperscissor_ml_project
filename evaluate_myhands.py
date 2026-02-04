@@ -212,8 +212,8 @@ def _save_misclassified_from_probs(file_paths, probs, y_true, class_names,
 
 # ------------------------- main -------------------------
 def main(model_path: str, data_dir: str, outdir: str | None):
-    USE_TTA = True
-    USE_TTA_ROT = getattr(config, "EVAL_TTA_ROT", False)
+    USE_TTA = getattr(config, "EVAL_TTA", True)
+    USE_TTA_ROT = USE_TTA and getattr(config, "EVAL_TTA_ROT", False)
     RESIZE_MODE = getattr(config, "EVAL_RESIZE_MODE", "pad")   # 'pad' | 'warp'
     RECALIB_MODE = getattr(config, "EVAL_RECALIB", "uniform")  # 'off' | 'uniform' | 'empirical'
     RECALIB_ALPHA = getattr(config, "RECALIB_ALPHA", 1.0)
@@ -314,7 +314,7 @@ def main(model_path: str, data_dir: str, outdir: str | None):
     settings = {
         "IMG_SIZE": getattr(config, "IMG_SIZE", 96),
         "RESIZE_MODE": RESIZE_MODE,
-        "USE_TTA": True,
+        "USE_TTA": USE_TTA,
         "EVAL_TTA_ROT": USE_TTA_ROT,
         "EVAL_ZERO_BIAS": ZERO_BIAS,
         "EVAL_RECALIB": RECALIB_MODE,
