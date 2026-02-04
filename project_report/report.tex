@@ -16,7 +16,6 @@
 \setlength{\emergencystretch}{3em}
 \usepackage[a4paper,margin=2.5cm]{geometry}
 
-\usepackage{graphicx}
 \graphicspath{{../reports/}}
 
 
@@ -65,8 +64,26 @@ Rock--Paper--Scissors Image Classification\par}
 
 \end{titlepage}
 
-\section*{Introduction}
 
+\begin{abstract}
+This project investigates the impact of architectural complexity on the performance and 
+robustness of convolutional neural networks for image classification, using the 
+Rock--Paper--Scissors hand gesture task as a controlled case study. Three CNN architectures 
+with progressively increasing capacity are designed and compared under identical training 
+conditions, including consistent data preprocessing, augmentation, and optimization strategies. 
+Model selection is guided by a constrained hyperparameter tuning procedure based on validation 
+accuracy. Beyond standard in-distribution evaluation, particular emphasis is placed on 
+generalization under domain shift through testing on an external dataset of unconstrained, 
+real-world images. The experimental results reveal a clear relationship between model capacity 
+and in-distribution performance, while also highlighting that strong validation accuracy does 
+not necessarily guarantee robustness to distributional changes. The findings underscore the importance 
+of evaluating neural network models beyond held-out validation data when assessing their 
+reliability in real-world deployment scenarios.
+\end{abstract}
+
+
+\newpage
+\section{Introduction}
 
 Convolutional Neural Networks (CNNs) have become a standard approach for image
 classification tasks due to their ability to automatically learn hierarchical
@@ -74,20 +91,33 @@ feature representations from raw visual data. In recent years, CNN-based models
 have demonstrated strong performance across a wide range of computer vision
 applications, from object recognition to gesture and action classification.
 
-This project investigates the application of convolutional neural networks to
-the classification of hand gesture images representing the Rock--Paper--Scissors
-game. Using a curated image dataset, three CNN architectures of increasing
-complexity are designed, trained, and systematically compared under identical
-experimental conditions. The analysis focuses not only on classification
-accuracy, but also on training dynamics, error patterns, and robustness to
-domain shift, providing a comprehensive evaluation of how architectural
-choices influence predictive performance and generalization.
+Despite these successes, the relationship between architectural complexity and
+model generalization remains a central issue in deep learning. While increasing
+model capacity often leads to improved performance on held-out validation data,
+it does not necessarily translate into robust behaviour when models are exposed
+to distributional shifts or unconstrained real-world inputs. This challenge is
+particularly relevant for vision tasks involving variability in lighting,
+backgrounds, and acquisition conditions, such as hand gesture recognition.
+
+Within this context, the present study uses the Rock--Paper--Scissors image
+classification task as a controlled benchmark to analyse how different CNN
+architectures behave as model complexity increases. By comparing multiple
+architectures under a consistent experimental protocol, the project aims to
+provide insight into how architectural choices affect learning dynamics,
+error structure, and generalization properties under both standard and shifted
+data distributions.
+
+The remainder of the report is organized as follows. Section~2 describes the
+dataset and preprocessing pipeline, Section~3 presents the model architectures
+and experimental results, and Section~4 discusses generalization under domain
+shift.
 
 \section{Data Exploration and Preprocessing}
 \subsection{Dataset Description and Exploratory Analysis}
 
 The dataset used in this project was obtained from a publicly available
-Kaggle repository (\url{https://www.kaggle.com/datasets/drgfreeman/rockpaperscissors}) containing images of hand gestures for the
+Kaggle repository (\url{https://www.kaggle.com/datasets/drgfreeman/rockpaperscissors}) 
+containing images of hand gestures for the
 Rock--Paper--Scissors game. The dataset consists of a total of 2,188 RGB images,
 evenly distributed across the three target classes: rock (726 images),
 paper (710 images), and scissors (752 images). All images were captured
@@ -792,10 +822,11 @@ conditions.
 
 \section{Conclusion and Future Work}
 
-This project investigated the effectiveness of convolutional neural networks 
-with increasing architectural complexity for classifying hand-gesture 
-images representing rock, paper, and scissors. Through a systematic 
-comparison of three CNN architectures trained under identical
+This project investigated how increasing architectural complexity in
+convolutional neural networks affects both predictive performance and
+robustness to distributional shift in image classification tasks, using
+rock--paper--scissors hand gesture recognition as a controlled case study.
+Through a systematic comparison of three CNN architectures trained under identical
 optimization settings, the analysis demonstrated a clear relationship
 between model capacity and predictive performance. While the baseline
 architecture exhibited signs of underfitting and limited discriminative
@@ -820,10 +851,12 @@ out-of-distribution conditions.
 Despite these encouraging results, several limitations must be
 acknowledged. The custom dataset used for the generalization test is
 intentionally small and qualitative in nature, preventing statistically
-robust performance estimates. Moreover, all models were trained
+robust performance estimates and limiting the strength of conclusions that can be drawn about 
+generalization under domain shift. Moreover, all models were trained
 exclusively on a curated dataset, without the use of advanced data
 augmentation strategies or domain adaptation techniques that could
 further enhance robustness. 
+
 Future work could therefore explore the impact of more aggressive augmentation
 pipelines and the inclusion of real-world images during training to improve
 generalization under domain shift. Additionally, future experiments could
@@ -832,10 +865,12 @@ enhance robustness in out-of-distribution settings. Investigating probabilistic
 calibration methods and confidence-aware decision mechanisms could also help
 address residual uncertainty when models are deployed in unconstrained
 environments.
-From an application perspective, the final model could be deployed as a
-lightweight web application enabling interactive rock--paper--scissors play
+
+Finally, in terms of potential applications, the final model could be deployed
+as a lightweight web application enabling interactive rock--paper--scissors play
 and real-time qualitative evaluation.
 
+\newpage
 \appendix
 \section*{Appendix}
 \addcontentsline{toc}{section}{Appendix}
