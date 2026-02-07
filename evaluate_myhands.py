@@ -292,7 +292,7 @@ def main(model_path: str, data_dir: str, outdir: str | None):
 
     tag = _artifact_tag(model_path)
 
-    # -------- outdir auto / opzionale --------
+    # -------- outdir --------
     outroot = getattr(config, "EVAL_OUTROOT", "reports/custom_eval_myhands")
     prefix  = getattr(config, "EVAL_OUTDIR_PREFIX", "my_hands_")
     always_sub = getattr(config, "EVAL_ALWAYS_SUBDIR", False)
@@ -319,18 +319,18 @@ def main(model_path: str, data_dir: str, outdir: str | None):
         else:
             x = tf.clip_by_value(xb*255.0, 0.0, 255.0) if pre_scale_255 else xb
             p = model.predict(x, verbose=0)
-        probs_all.append(p)
-        ytrue_all.append(yb.numpy())
+        probs_all.append(p) # probs per batch
+        ytrue_all.append(yb.numpy()) # one-hot labels
 
-    probs = np.concatenate(probs_all, axis=0)
-    y_true = np.argmax(np.concatenate(ytrue_all, axis=0), axis=1)
+    probs = np.concatenate(probs_all, axis=0) 
+    y_true = np.argmax(np.concatenate(ytrue_all, axis=0), axis=1) 
 
     # zero-bias
     if ZERO_BIAS:
         probs = _apply_zero_bias_to_probs(model, probs)
         print("▶ Applied zero-bias to final Dense (removed learned class prior).")
 
-    # auto-permutazione classi
+    # classes auto-permutation if accuracy is better
     identity_pred = probs.argmax(axis=1)
     id_acc = (identity_pred == y_true).mean()
     best_perm, best_acc = _best_perm_from_probs(y_true, probs)
@@ -343,7 +343,7 @@ def main(model_path: str, data_dir: str, outdir: str | None):
     else:
         print(f"✅ Class order appears aligned (identity perm). acc={id_acc:.3f}")
 
-    # ricalibrazione
+    # recalibration
     pred_prior_used = None
     target_prior_used = None
     weights_used = None
@@ -361,7 +361,7 @@ def main(model_path: str, data_dir: str, outdir: str | None):
     else:
         print("▶ Using RAW posterior (no recalibration).")
 
-    # metriche finali
+    # final metrics
     y_pred = probs.argmax(axis=1)
     labels = list(range(len(config.CLASSES)))
     report_txt = classification_report(y_true, y_pred, labels=labels, target_names=config.CLASSES, zero_division=0)
@@ -371,7 +371,7 @@ def main(model_path: str, data_dir: str, outdir: str | None):
     print(("\nAccuracy (TTA): " if USE_TTA else "\nAccuracy: ") + f"{acc:.4f}\n")
     print(report_txt)
 
-    # ---- riepilogo numerico ----
+    # ---- numeric report ----
     true_counts = np.bincount(y_true, minlength=len(config.CLASSES))
     pred_counts = np.bincount(y_pred, minlength=len(config.CLASSES))
     macro_f1 = f1_score(y_true, y_pred, average="macro", zero_division=0)
@@ -399,7 +399,7 @@ def main(model_path: str, data_dir: str, outdir: str | None):
     )
     print(f"📝  Saved summary to {summary_path}")
 
-    # salvataggi
+    # save:
     _ensure_dir(outdir)
     evaluation.save_report(report_txt, os.path.join(outdir, f"classification_report_{tag}.txt"))
     evaluation.plot_confusion(cm, config.CLASSES,
@@ -415,6 +415,7 @@ def main(model_path: str, data_dir: str, outdir: str | None):
         print(f"(info) Unable to save misclassified grid: {e}")
 
 if __name__ == "__main__":
+    # script from terminal: ex. python evaluate_myhands.py --model models/model_c_best.keras --dir my_hands
     parser = argparse.ArgumentParser(description="Evaluate a saved .keras model on your labeled hand-gesture photos.")
     parser.add_argument("--model", required=True, help="Path to .keras model (e.g., models/model_a_best.keras)")
     parser.add_argument("--dir", default="my_hands", help="Root folder with subfolders rock/paper/scissors")
