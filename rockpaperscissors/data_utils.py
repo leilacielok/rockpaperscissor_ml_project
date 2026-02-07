@@ -34,8 +34,8 @@ def _augment_fn(x, y):
     ])
     return aug(x, training=True), y
 
+# count number of images per class in the first 20 batches
 def _class_hist(ds, n_batches=20):
-    # diagnostic: sums one-hot per class on first batches
     tot = None
     for i, (_, y) in enumerate(ds.take(n_batches)):
         s = tf.reduce_sum(y, axis=0)
@@ -43,7 +43,7 @@ def _class_hist(ds, n_batches=20):
     return None if tot is None else tot.numpy()
 
 # public API
-def load_train_val_stratified(
+def load_train_val_stratified(    
     validation_split: float = 0.2,
     augment: bool = True,
     cache_train: bool = False,
@@ -51,11 +51,19 @@ def load_train_val_stratified(
     batch_size: int | None = None,
 ):
     """
-    Split stratificato reale leggendo i file dal filesystem.
-    Ritorna (train_ds, val_ds, file_paths_val).
-    - normalizzazione: [0,1] nel dataset (no Rescaling nei modelli)
-    - mapping classi: forzato da config.CLASSES (ordine identico per train e val)
+    Load a stratified train/validation split from the image dataset stored on disk.
+
+    The function builds efficient ``tf.data`` pipelines including image decoding,
+    resizing, normalization to the [0, 1] range, optional on-the-fly data
+    augmentation (applied only to the training set), batching, caching, and
+    prefetching.
+
+    Returns:
+    # train_ds and val_ds as tf.data.Dataset (dataset yielding batches of (image, one-hot label) pairs).
+    # file_paths_val as list of str (List of file paths corresponding to the validation samples, useful 
+    for external analysis or qualitative inspection).
     """
+    # Stratified split 
     data_dir = config.DATA_ROOT
     img_size = getattr(config, "IMG_SIZE", 96)
     bs = batch_size or config.BATCH_SIZE
@@ -140,8 +148,7 @@ def load_train_val_stratified(
 
 def load_external_test(cache: bool = True, batch_size: int | None = None):
     """
-    Carica un test esterno (sottocartelle = nomi classe).
-    Normalizzazione [0,1] qui nel dataset per coerenza.
+    External test, same normalization of training [0,1], same class order.
     """
     test_dir = "data/rps-cv-images"
     img_size = getattr(config, "IMG_SIZE", 96)
@@ -165,9 +172,23 @@ def load_external_test(cache: bool = True, batch_size: int | None = None):
     return ds.prefetch(AUTOTUNE)
 
 def compute_class_priors(ds, n_classes):
+    """
+    Compute empirical class priors from a dataset with one-hot labels.
+
+    Parameters
+    ----------
+    ds : tf.data.Dataset
+        Dataset yielding (x, y) pairs with one-hot encoded labels.
+    n_classes : int
+        Number of classes.
+
+    Returns
+    -------
+    np.ndarray
+        Array of class prior probabilities summing to 1.
+    """
     counts = np.zeros(n_classes, dtype=np.int64)
     for _, y in ds:
         counts += y.numpy().sum(axis=0).astype(np.int64)
     priors = counts / max(1, counts.sum())
     return priors
-
