@@ -239,10 +239,54 @@ def _save_misclassified_from_probs(file_paths, probs, y_true, class_names,
 
 # ------------------------- main -------------------------
 def main(model_path: str, data_dir: str, outdir: str | None):
+    """
+    Evaluate a trained Keras model on a labeled image dataset and generate
+    quantitative and qualitative evaluation artifacts.
+
+    This function orchestrates the full evaluation pipeline for a saved
+    `.keras` model, including dataset loading, optional test-time
+    augmentation (TTA), optional post-hoc probability corrections, metric
+    computation, and result visualization.
+
+    The evaluation dataset is expected to be organized in a directory
+    structure with one subfolder per class (matching `config.CLASSES`).
+    Images are loaded, preprocessed, and resized according to the evaluation
+    settings defined in `config.py`.
+
+    Depending on the configuration, the evaluation may include:
+    - Test-Time Augmentation (TTA), optionally with small rotations;
+    - Removal of the learned class prior via zero-bias correction;
+    - Post-hoc probability recalibration toward a target class prior;
+    - Automatic alignment of class ordering (diagnostic feature).
+
+    The function computes standard classification metrics (accuracy,
+    precision, recall, F1-score), saves a textual classification report,
+    plots the confusion matrix, optionally saves a grid of misclassified
+    examples, and writes a summary file documenting the evaluation settings
+    and results.
+
+    Parameters
+    ----------
+    model_path : str
+        Path to the saved Keras model (`.keras` file) to be evaluated.
+    data_dir : str
+        Root directory of the labeled evaluation dataset, containing one
+        subdirectory per class.
+    outdir : str or None
+        Output directory where evaluation artifacts are saved. If None, the
+        directory is automatically constructed using
+        `EVAL_OUTROOT` and `EVAL_OUTDIR_PREFIX` from `config.py`.
+
+    Returns
+    -------
+    None
+        This function does not return a value. All results are saved to disk
+        and key metrics are printed to standard output.
+    """
     USE_TTA = getattr(config, "EVAL_TTA", True)
     USE_TTA_ROT = USE_TTA and getattr(config, "EVAL_TTA_ROT", False)
-    RESIZE_MODE = getattr(config, "EVAL_RESIZE_MODE", "pad")   # 'pad' | 'warp'
-    RECALIB_MODE = getattr(config, "EVAL_RECALIB", "uniform")  # 'off' | 'uniform' | 'empirical'
+    RESIZE_MODE = getattr(config, "EVAL_RESIZE_MODE", "pad")
+    RECALIB_MODE = getattr(config, "EVAL_RECALIB", "uniform") 
     RECALIB_ALPHA = getattr(config, "RECALIB_ALPHA", 1.0)
     ZERO_BIAS = getattr(config, "EVAL_ZERO_BIAS", False)
 
