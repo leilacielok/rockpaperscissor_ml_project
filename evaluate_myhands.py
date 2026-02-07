@@ -6,7 +6,6 @@ import matplotlib.pyplot as plt
 from PIL import Image, ImageOps
 from sklearn.metrics import classification_report, confusion_matrix
 from rockpaperscissors import config, evaluation
-from sklearn.metrics import precision_recall_fscore_support, f1_score
 
 AUTOTUNE = tf.data.AUTOTUNE
 
@@ -22,8 +21,9 @@ def _save_summary(
     settings, used_perm, pred_prior=None, target_prior=None, weights=None
 ):
     """
-    per_class: dict {class_name: {'precision':..., 'recall':..., 'f1':..., 'support':...}}
-    settings: dict con flag/parametri usati (resize, TTA, zero-bias, recalib, alpha, ecc.)
+    overall: accuracy, macro f1
+    per_class: dict {class_name: {precision, recall, f1, support}}
+    settings: dict with flag/parameters used (resize, TTA, zero-bias, recalib...)
     """
     lines = []
     lines.append("# Evaluation Summary")
@@ -58,13 +58,13 @@ def _save_summary(
     with open(outpath, "w", encoding="utf-8") as f:
         f.write("\n".join(lines))
 
-# ------------------------- loader (EXIF + pad/warp) -------------------------
+# ------------------------- loader (EXIF + resize) -------------------------
 def _decode_image_pil(path):
     p = path.numpy().decode()
     img = Image.open(p)
     img = ImageOps.exif_transpose(img)
-    img = img.convert("RGB")
-    return np.array(img)  # uint8
+    img = img.convert("RGB") # (R,B,G)
+    return np.array(img)  # image pixels matrix HxWx3
 
 def _load_img(path, img_size, resize_mode="pad"):
     x = tf.py_function(_decode_image_pil, [path], Tout=tf.uint8)
@@ -80,11 +80,35 @@ def _parse(path, label, img_size, n_classes, resize_mode="pad"):
     return _load_img(path, img_size, resize_mode=resize_mode), tf.one_hot(label, n_classes)
 
 def load_labeled_dir(root_dir, batch_size=None, resize_mode="pad"):
+    """
+    Load a labeled image dataset from a directory structured by class names.
+
+    The function expects `root_dir` to contain one subdirectory per class,
+    with subdirectory names matching `config.CLASSES` (e.g. `rock/`, `paper/`,
+    `scissors/`). Each image file found in these subdirectories is assigned
+    a label corresponding to the index of its class in `config.CLASSES`.
+
+    Images are loaded using PIL with EXIF orientation correction, converted
+    to RGB to guarantee three channels, normalized to float32 in [0, 1],
+    and resized to a fixed square shape according to `resize_mode`.
+
+    The resulting dataset yields batches of `(image, label)` pairs, where
+    images have shape `(IMG_SIZE, IMG_SIZE, 3)` and labels are one-hot
+    encoded vectors of length `n_classes`.
+
+    Returns
+    ds as tf.data.Dataset: TensorFlow dataset yielding batches of `(image, label)` pairs,
+    file_paths as list of str: list of absolute file paths corresponding to the images in the
+        dataset, in the same order as the dataset elements. 
+
+    RuntimeError if no image files are found in the expected class subdirectories (no out-of-distribution evaluation).
+    """
     bs = batch_size or config.BATCH_SIZE
     class_names = list(config.CLASSES)
     n_classes = len(class_names)
     class_to_idx = {c: i for i, c in enumerate(class_names)}
 
+    # label each file with class index
     files, labels = [], []
     for c in class_names:
         cdir = Path(root_dir) / c
@@ -102,7 +126,7 @@ def load_labeled_dir(root_dir, batch_size=None, resize_mode="pad"):
 
     img_size = getattr(config, "IMG_SIZE", 96)
     ds = tf.data.Dataset.from_tensor_slices((files_tf, labels_tf)) \
-        .map(lambda p, y: _parse(p, y, img_size, n_classes, resize_mode),
+        .map(lambda p, y: _parse(p, y, img_size, n_classes, resize_mode), # map: decode+resize+one-hot
              num_parallel_calls=AUTOTUNE) \
         .batch(bs).cache().prefetch(AUTOTUNE)
     return ds, files
@@ -125,26 +149,27 @@ def _get_last_dense_bias(model):
         if isinstance(lyr, tf.keras.layers.Dense):
             w = lyr.get_weights()
             if len(w) == 2:  # [W, b]
-                return w[1]
+                return w[1] # b = [b_rick, b_paper, b_scissors]
             break
     return None
 
 # remove learned prior: p' ∝ p * exp(-b)
 def _apply_zero_bias_to_probs(model, probs):
-    b = _get_last_dense_bias(model)
+    b = _get_last_dense_bias(model) # b = [b_rick, b_paper, b_scissors]
     if b is None:
         return probs
-    w = np.exp(-b).reshape(1, -1)
-    p = probs * w
-    p = p / p.sum(axis=1, keepdims=True)
+    w = np.exp(-b).reshape(1, -1) # weights vector where w_k = exp(-b_k)
+    p = probs * w # scale probs: p'_k = p_k * w_k
+    p = p / p.sum(axis=1, keepdims=True) # normalize again
     return p
 
 # ------------------------- TTA -------------------------
 def _tta_views(xb, use_rot=False):
     img_size = getattr(config, "IMG_SIZE", 96)
-    def _resize_warp(x): return tf.image.resize(x, (img_size, img_size), method="bilinear", antialias=True)
+    def _resize_warp(x): 
+        return tf.image.resize(x, (img_size, img_size), method="bilinear", antialias=True)
 
-    views = [xb, tf.image.flip_left_right(xb)]
+    views = [xb, tf.image.flip_left_right(xb)] # views with different augmentations
     for frac in (0.9, 0.8):
         crop = _resize_warp(tf.image.central_crop(xb, frac))
         views += [crop, tf.image.flip_left_right(crop)]
@@ -162,7 +187,7 @@ def _predict_with_tta(model, xb, use_rot=False, pre_scale_255=False):
     views = _tta_views(xb, use_rot=use_rot)
     if pre_scale_255:
         views = [tf.clip_by_value(v * 255.0, 0.0, 255.0) for v in views]
-    preds = [model(vi, training=False).numpy() for vi in views]
+    preds = [model(vi, training=False).numpy() for vi in views] # preds for each view
     return np.mean(preds, axis=0)
 
 # ------------------------- post-proc -------------------------
@@ -201,7 +226,9 @@ def _save_misclassified_from_probs(file_paths, probs, y_true, class_names,
     order = np.argsort(-conf[wrong_idxs]) if pick == "confident" else np.argsort(conf[wrong_idxs])
     sel = wrong_idxs[order][:top_n]
 
-    n = len(sel); cols = max(1, int(math.sqrt(n))); rows = math.ceil(n/cols)
+    n = len(sel) 
+    cols = max(1, int(math.sqrt(n)))
+    rows = math.ceil(n/cols)
     plt.figure(figsize=(cols*2.6, rows*2.6))
     for k, j in enumerate(sel, 1):
         img = Image.open(file_paths[j]).convert("RGB")
