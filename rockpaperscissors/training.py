@@ -15,14 +15,16 @@ def make_callbacks(checkpoint_path=None):
     - Optional checkpointing of the best model to disk.
 
     Parameters
-        checkpoint_path : str or None, optional
-            File path where the best model checkpoint is saved. If None, model
-            checkpointing is disabled. Parent directories are created automatically
-            if they do not exist.
+    ----------
+    checkpoint_path : str or None, optional
+        File path where the best model checkpoint is saved. If None, model
+        checkpointing is disabled. Parent directories are created automatically
+        if they do not exist.
 
     Returns
-        list of tf.keras.callbacks.Callback
-            List of callbacks to be passed to ``model.fit()``.
+    -------
+    list of tf.keras.callbacks.Callback
+        List of callbacks to be passed to ``model.fit()``.
     """
     cbs = [
         tf.keras.callbacks.EarlyStopping(
@@ -46,7 +48,7 @@ def make_callbacks(checkpoint_path=None):
     return cbs
 
 
-def train(model, train_ds, val_ds, epochs=50, callbacks=None, learning_rate=3e-4):
+def train(model, train_ds, val_ds, epochs=50, callbacks=None, learning_rate=3e-4, verbose=1):
     """
     Train a Keras model on the given training and validation datasets.
 
@@ -55,22 +57,31 @@ def train(model, train_ds, val_ds, epochs=50, callbacks=None, learning_rate=3e-4
     time is measured and returned together with the training history.
 
     Parameters
-        model as tf.keras.Model: The Keras model to be trained.
-        train_ds as tf.data.Dataset: Training dataset.
-        val_ds as tf.data.Dataset: Validation dataset used for performance monitoring and callbacks.
-        epochs (int, optional): maximum number of training epochs. Training may terminate earlier if
-            early stopping is enabled via callbacks.
-        callbacks : list of tf.keras.callbacks.Callback or None, optional
-            Callbacks controlling training behavior (e.g., early stopping, learning
-            rate scheduling, checkpointing). If None, no callbacks are applied.
-        learning_rate (float, optional): Learning rate used for the Adam optimizer when compiling the model.
+    ----------
+    model : tf.keras.Model
+        The Keras model to be trained.
+    train_ds : tf.data.Dataset
+        Training dataset.
+    val_ds : tf.data.Dataset
+        Validation dataset used for performance monitoring and callbacks.
+    epochs : int, default=50
+        Maximum number of training epochs. Training may terminate earlier if
+        early stopping is enabled via callbacks.
+    callbacks : sequence of tf.keras.callbacks.Callback or None, optional
+        Callbacks controlling training behavior (e.g., early stopping, learning
+        rate scheduling, checkpointing). If None, no callbacks are applied.
+    learning_rate : float, default=3e-4
+        Learning rate used for the Adam optimizer when compiling the model.
+    verbose : int, default=1
+        Verbosity mode passed to ``model.fit()``.
 
     Returns
-        history : tf.keras.callbacks.History
-            Object containing the training and validation metrics recorded at each
-            epoch.
-        runtime : float
-            Total wall-clock training time in seconds.
+    -------
+    history : tf.keras.callbacks.History
+        Object containing the training and validation metrics recorded at each
+        epoch.
+    runtime : float
+        Total wall-clock training time in seconds.
     """
     if getattr(model, "optimizer", None) is None:
         model.compile(
@@ -84,7 +95,7 @@ def train(model, train_ds, val_ds, epochs=50, callbacks=None, learning_rate=3e-4
         validation_data=val_ds,
         epochs=epochs,
         callbacks=callbacks,
-        verbose=1,
+        verbose=verbose,
     )
     runtime = perf_counter() - t0
     return history, runtime
