@@ -1,6 +1,8 @@
 from pathlib import Path
+
 from keras.models import load_model
-from rockpaperscissors import data_utils, evaluation, config
+
+from rockpaperscissors import config, data_utils, evaluation
 
 # 1. Final model
 MODEL_PATH = "models/final_best.keras"

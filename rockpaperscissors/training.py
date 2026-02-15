@@ -1,6 +1,8 @@
-import tensorflow as tf
-from time import perf_counter
 from pathlib import Path
+from time import perf_counter
+
+import tensorflow as tf
+
 
 def make_callbacks(checkpoint_path=None):
     """

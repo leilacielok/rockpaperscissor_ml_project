@@ -1,7 +1,10 @@
-import tensorflow as tf
 import sys
 from pathlib import Path
+
+import tensorflow as tf
+
 from rockpaperscissors import config, data_utils, evaluation
+
 
 def _ensure_dir(p: Path):
     p.mkdir(parents=True, exist_ok=True)

@@ -1,11 +1,16 @@
-import os
-os.environ["TF_ENABLE_ONEDNN_OPTS"] = "0"
-
-from rockpaperscissors import config, tuning, data_utils, architectures, training, evaluation
-import numpy as np, tensorflow as tf, random
-from pathlib import Path
-from itertools import product
 import csv
+import os
+
+os.environ["TF_ENABLE_ONEDNN_OPTS"] = "0"
+import random
+from itertools import product
+from pathlib import Path
+
+import numpy as np
+import tensorflow as tf
+
+from rockpaperscissors import (architectures, config, data_utils, evaluation,
+                               training, tuning)
 
 # Reproducibility
 tf.random.set_seed(config.SEED); np.random.seed(config.SEED); random.seed(config.SEED)

@@ -1,5 +1,7 @@
 import tensorflow as tf
+
 from rockpaperscissors import config
+
 
 def conv_ln_act(x, filters, k=3, s=1, act=True):
     """

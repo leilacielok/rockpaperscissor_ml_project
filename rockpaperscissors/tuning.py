@@ -1,8 +1,13 @@
+import csv
+import time
 from itertools import product
 from pathlib import Path
-import csv, time, numpy as np, tensorflow as tf
 
-from . import architectures, data_utils, training, config, evaluation
+import numpy as np
+import tensorflow as tf
+
+from . import architectures, config, data_utils, evaluation, training
+
 
 # ----------------- builders -----------------
 def _build_model(name, log_priors=None):

@@ -1,10 +1,15 @@
-import os, math, argparse, itertools
+import argparse
+import itertools
+import math
+import os
 from pathlib import Path
+
+import matplotlib.pyplot as plt
 import numpy as np
 import tensorflow as tf
-import matplotlib.pyplot as plt
 from PIL import Image, ImageOps
 from sklearn.metrics import classification_report, confusion_matrix
+
 from rockpaperscissors import config, evaluation
 
 AUTOTUNE = tf.data.AUTOTUNE
