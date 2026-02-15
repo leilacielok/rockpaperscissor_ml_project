@@ -20,8 +20,7 @@ outdir.mkdir(parents=True, exist_ok=True)
 
 # 5. Save classification report
 evaluation.save_report(
-    results["report_txt"],
-    str(outdir / "test_classification_report.txt")
+    results["report_txt"], str(outdir / "test_classification_report.txt")
 )
 
 # 6. Save confusion matrix
@@ -29,7 +28,7 @@ evaluation.plot_confusion(
     results["cm"],
     config.CLASSES,
     outpath=str(outdir / "test_confusion_matrix.png"),
-    title="Confusion Matrix (external test – rps-cv-images)"
+    title="Confusion Matrix (external test – rps-cv-images)",
 )
 
 print("External evaluation completed successfully.")

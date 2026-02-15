@@ -9,11 +9,13 @@ from . import config
 
 AUTOTUNE = tf.data.AUTOTUNE
 
+
 def _decode_image(path):
     img_bytes = tf.io.read_file(path)
     # decode_image manages png/jpg
     img = tf.image.decode_image(img_bytes, channels=3, expand_animations=False)
     return img
+
 
 def _load_img(path, img_size):
     img = _decode_image(path)
@@ -21,21 +23,26 @@ def _load_img(path, img_size):
     img = tf.image.resize(img, (img_size, img_size), method="bilinear", antialias=True)
     return img
 
+
 def _parse(path, label, img_size, n_classes):
     x = _load_img(path, img_size)
     y = tf.one_hot(label, depth=n_classes)
     return x, y
 
+
 def _augment_fn(x, y):
     # stable and light Augment (active on training)
-    aug = tf.keras.Sequential([
-        tf.keras.layers.RandomFlip("horizontal"),
-        tf.keras.layers.RandomRotation(0.08),
-        tf.keras.layers.RandomZoom(0.1),
-        tf.keras.layers.RandomTranslation(0.08, 0.08),
-        tf.keras.layers.RandomContrast(0.05),
-    ])
+    aug = tf.keras.Sequential(
+        [
+            tf.keras.layers.RandomFlip("horizontal"),
+            tf.keras.layers.RandomRotation(0.08),
+            tf.keras.layers.RandomZoom(0.1),
+            tf.keras.layers.RandomTranslation(0.08, 0.08),
+            tf.keras.layers.RandomContrast(0.05),
+        ]
+    )
     return aug(x, training=True), y
+
 
 # count number of images per class in the first 20 batches
 def _class_hist(ds, n_batches=20):
@@ -45,8 +52,9 @@ def _class_hist(ds, n_batches=20):
         tot = s if tot is None else tot + s
     return None if tot is None else tot.numpy()
 
+
 # public API
-def load_train_val_stratified(    
+def load_train_val_stratified(
     validation_split: float = 0.2,
     augment: bool = True,
     cache_train: bool = False,
@@ -63,10 +71,10 @@ def load_train_val_stratified(
 
     Returns:
     # train_ds and val_ds as tf.data.Dataset (dataset yielding batches of (image, one-hot label) pairs).
-    # file_paths_val as list of str (List of file paths corresponding to the validation samples, useful 
+    # file_paths_val as list of str (List of file paths corresponding to the validation samples, useful
     for external analysis or qualitative inspection).
     """
-    # Stratified split 
+    # Stratified split
     data_dir = config.DATA_ROOT
     img_size = getattr(config, "IMG_SIZE", 96)
     bs = batch_size or config.BATCH_SIZE
@@ -86,11 +94,14 @@ def load_train_val_stratified(
     labels = np.array(labels)
 
     if len(files) == 0:
-        raise RuntimeError(f"No image found in {data_dir} in the subfolders {class_names}")
+        raise RuntimeError(
+            f"No image found in {data_dir} in the subfolders {class_names}"
+        )
 
     # 2) stratified split
     f_train, f_val, y_train, y_val = train_test_split(
-        files, labels,
+        files,
+        labels,
         test_size=validation_split,
         random_state=config.SEED,
         stratify=labels,
@@ -100,25 +111,36 @@ def load_train_val_stratified(
     # diagnostic: all classes in both splits
     train_present = np.unique(y_train)
     val_present = np.unique(y_val)
-    assert set(train_present) == set(range(n_classes)), f"Missing classes in train: {train_present}"
-    assert set(val_present)   == set(range(n_classes)), f"Missing classes in val: {val_present}"
+    assert set(train_present) == set(
+        range(n_classes)
+    ), f"Missing classes in train: {train_present}"
+    assert set(val_present) == set(
+        range(n_classes)
+    ), f"Missing classes in val: {val_present}"
 
     # 3) dataset tf.data with normalization
     parse_train = lambda p, y: _parse(p, y, img_size, n_classes)
-    parse_val   = lambda p, y: _parse(p, y, img_size, n_classes)
+    parse_val = lambda p, y: _parse(p, y, img_size, n_classes)
 
-    ds_train = tf.data.Dataset.from_tensor_slices((f_train, y_train)).map(parse_train, num_parallel_calls=AUTOTUNE)
-    ds_val   = tf.data.Dataset.from_tensor_slices((f_val,   y_val  )).map(parse_val,   num_parallel_calls=AUTOTUNE)
+    ds_train = tf.data.Dataset.from_tensor_slices((f_train, y_train)).map(
+        parse_train, num_parallel_calls=AUTOTUNE
+    )
+    ds_val = tf.data.Dataset.from_tensor_slices((f_val, y_val)).map(
+        parse_val, num_parallel_calls=AUTOTUNE
+    )
 
     # 4) augment only on train
     if augment:
-        aug_layer = tf.keras.Sequential([
-            tf.keras.layers.RandomFlip("horizontal"),
-            tf.keras.layers.RandomRotation(0.08),
-            tf.keras.layers.RandomZoom(0.1),
-            tf.keras.layers.RandomTranslation(0.08, 0.08),
-            tf.keras.layers.RandomContrast(0.05),
-        ], name="aug")
+        aug_layer = tf.keras.Sequential(
+            [
+                tf.keras.layers.RandomFlip("horizontal"),
+                tf.keras.layers.RandomRotation(0.08),
+                tf.keras.layers.RandomZoom(0.1),
+                tf.keras.layers.RandomTranslation(0.08, 0.08),
+                tf.keras.layers.RandomContrast(0.05),
+            ],
+            name="aug",
+        )
 
         def _apply_aug(x, y):
             return aug_layer(x, training=True), y
@@ -126,8 +148,10 @@ def load_train_val_stratified(
         ds_train = ds_train.map(_apply_aug, num_parallel_calls=AUTOTUNE)
 
     # 5) batching / shuffle / cache / prefetch
-    ds_train = ds_train.shuffle(buffer_size=bs*4, seed=config.SEED, reshuffle_each_iteration=True).batch(bs)
-    ds_val   = ds_val.batch(bs)
+    ds_train = ds_train.shuffle(
+        buffer_size=bs * 4, seed=config.SEED, reshuffle_each_iteration=True
+    ).batch(bs)
+    ds_val = ds_val.batch(bs)
 
     if cache_train:
         ds_train = ds_train.cache()
@@ -135,12 +159,12 @@ def load_train_val_stratified(
         ds_val = ds_val.cache()
 
     ds_train = ds_train.prefetch(AUTOTUNE)
-    ds_val   = ds_val.prefetch(AUTOTUNE)
+    ds_val = ds_val.prefetch(AUTOTUNE)
 
     # 6) diagnostic: mapping classes and distributions (first ~20 batch)
     print("class_names (train/val):", class_names)
     tr_hist = _class_hist(ds_train, n_batches=20)
-    va_hist = _class_hist(ds_val,   n_batches=20)
+    va_hist = _class_hist(ds_val, n_batches=20)
     if tr_hist is not None and va_hist is not None:
         print("approx train label sums:", tr_hist.astype(int))
         print("approx val   label sums:", va_hist.astype(int))
@@ -148,6 +172,7 @@ def load_train_val_stratified(
     # file_paths_val for external analysis
     file_paths_val = list(f_val)
     return ds_train, ds_val, file_paths_val
+
 
 def load_external_test(cache: bool = True, batch_size: int | None = None):
     """
@@ -167,12 +192,13 @@ def load_external_test(cache: bool = True, batch_size: int | None = None):
         interpolation="bilinear",
     )
 
-    norm = tf.keras.layers.Rescaling(1.0/255.0)
+    norm = tf.keras.layers.Rescaling(1.0 / 255.0)
     ds = ds_raw.map(lambda x, y: (norm(x), y), num_parallel_calls=AUTOTUNE)
 
     if cache:
         ds = ds.cache()
     return ds.prefetch(AUTOTUNE)
+
 
 def compute_class_priors(ds, n_classes):
     """

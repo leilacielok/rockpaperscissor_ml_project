@@ -9,13 +9,22 @@ from pathlib import Path
 import numpy as np
 import tensorflow as tf
 
-from rockpaperscissors import (architectures, config, data_utils, evaluation,
-                               training, tuning)
+from rockpaperscissors import (
+    architectures,
+    config,
+    data_utils,
+    evaluation,
+    training,
+    tuning,
+)
 
 # Reproducibility
-tf.random.set_seed(config.SEED); np.random.seed(config.SEED); random.seed(config.SEED)
+tf.random.set_seed(config.SEED)
+np.random.seed(config.SEED)
+random.seed(config.SEED)
 os.environ["PYTHONHASHSEED"] = str(config.SEED)
-Path("models").mkdir(exist_ok=True); Path("reports").mkdir(exist_ok=True)
+Path("models").mkdir(exist_ok=True)
+Path("reports").mkdir(exist_ok=True)
 
 
 def train_and_report(model_name, model, train_ds, val_ds, file_paths_val):
@@ -23,12 +32,19 @@ def train_and_report(model_name, model, train_ds, val_ds, file_paths_val):
 
     ckpt_path = f"models/{model_name}_best.keras"
     history, runtime = training.train(
-        model, train_ds, val_ds, epochs=30,
-        callbacks=training.make_callbacks(checkpoint_path=ckpt_path)
+        model,
+        train_ds,
+        val_ds,
+        epochs=30,
+        callbacks=training.make_callbacks(checkpoint_path=ckpt_path),
     )
-    print(f"Total training time: {runtime:.1f}s | Avg/epoch: {runtime/len(history.history['loss']):.2f}s")
-    best_epoch = 1 + int(np.argmin(history.history.get('val_loss', history.history['loss'])))
-    best_vloss = float(min(history.history.get('val_loss', [np.inf])))
+    print(
+        f"Total training time: {runtime:.1f}s | Avg/epoch: {runtime/len(history.history['loss']):.2f}s"
+    )
+    best_epoch = 1 + int(
+        np.argmin(history.history.get("val_loss", history.history["loss"]))
+    )
+    best_vloss = float(min(history.history.get("val_loss", [np.inf])))
     print(f"Early stopped at epoch {best_epoch} (best val_loss={best_vloss:.4f})")
     model.save(f"models/{model_name}.keras")
 
@@ -42,27 +58,32 @@ def train_and_report(model_name, model, train_ds, val_ds, file_paths_val):
 
     # Reports & plots
     evaluation.save_report(
-        res_val["report_txt"],
-        str(model_dir / "val_classification_report.txt")
+        res_val["report_txt"], str(model_dir / "val_classification_report.txt")
     )
     evaluation.plot_confusion(
-        res_val["cm"], config.CLASSES,
+        res_val["cm"],
+        config.CLASSES,
         outpath=str(model_dir / "val_confusion_matrix.png"),
-        title=f"Confusion Matrix (val) – {model_name}"
+        title=f"Confusion Matrix (val) – {model_name}",
     )
     evaluation.plot_history(history, outdir=str(model_dir))
 
     # Misclassified: most confident errors
     try:
         evaluation.show_misclassified(
-            val_ds, model, file_paths_val, config.CLASSES,
-            top_n=12, outpath=str(model_dir/"val_misclassified.png"), pick="confident"
+            val_ds,
+            model,
+            file_paths_val,
+            config.CLASSES,
+            top_n=12,
+            outpath=str(model_dir / "val_misclassified.png"),
+            pick="confident",
         )
     except Exception as e:
         print("Impossible to generate misclassified grid:", e)
 
     n_params = model.count_params()
-    return res_val['acc'], runtime, n_params, best_vloss
+    return res_val["acc"], runtime, n_params, best_vloss
 
 
 def main():
@@ -99,13 +120,16 @@ def main():
     # Table for report summary
     with open("reports/summary.csv", "w", newline="") as f:
         w = csv.writer(f)
-        w.writerow(["model", "val_accuracy", "train_runtime_s", "params", "best_val_loss"])
+        w.writerow(
+            ["model", "val_accuracy", "train_runtime_s", "params", "best_val_loss"]
+        )
         w.writerows(results)
 
     # External test on the best model
     try:
         best_name = max(results, key=lambda t: t[1])[0]
         from keras.models import load_model
+
         best_model = load_model(f"models/{best_name}.keras")
         test_ds = data_utils.load_external_test()
         res_test = evaluation.evaluate_on(test_ds, best_model, config.CLASSES)
@@ -114,16 +138,17 @@ def main():
         best_dir.mkdir(parents=True, exist_ok=True)
 
         evaluation.save_report(
-            res_test["report_txt"],
-            str(best_dir / "test_classification_report.txt")
+            res_test["report_txt"], str(best_dir / "test_classification_report.txt")
         )
         evaluation.plot_confusion(
-            res_test["cm"], config.CLASSES,
+            res_test["cm"],
+            config.CLASSES,
             outpath=str(best_dir / "test_confusion_matrix.png"),
-            title=f"Confusion Matrix (external test) – {best_name}"
+            title=f"Confusion Matrix (external test) – {best_name}",
         )
     except Exception as e:
         print("No external test set found:", e)
+
 
 if __name__ == "__main__":
     main()

@@ -9,10 +9,13 @@ from rockpaperscissors import config, data_utils, evaluation
 def _ensure_dir(p: Path):
     p.mkdir(parents=True, exist_ok=True)
 
+
 def _detect_final_arch() -> str:
-    candidates = [("model_a", Path("reports/model_a_final")),
-                  ("model_b", Path("reports/model_b_final")),
-                  ("model_c", Path("reports/model_c_final"))]
+    candidates = [
+        ("model_a", Path("reports/model_a_final")),
+        ("model_b", Path("reports/model_b_final")),
+        ("model_c", Path("reports/model_c_final")),
+    ]
     existing = [arch for arch, p in candidates if p.exists()]
     if len(existing) == 1:
         return existing[0]
@@ -21,6 +24,7 @@ def _detect_final_arch() -> str:
     if tr_csv.exists():
         try:
             import csv
+
             with tr_csv.open(newline="", encoding="utf-8") as f:
                 rows = list(csv.DictReader(f))
             if rows:
@@ -32,11 +36,14 @@ def _detect_final_arch() -> str:
             pass
     return "final"
 
+
 def _parse_model_tag(model_path: Path):
     stem = model_path.stem
     if stem == "final_best":
         arch = _detect_final_arch()
-        outdir = Path("reports") / (f"{arch}_final" if arch in {"model_a","model_b","model_c"} else "final")
+        outdir = Path("reports") / (
+            f"{arch}_final" if arch in {"model_a", "model_b", "model_c"} else "final"
+        )
         return arch, "bestofbest", "Best-of-best (tuning)", outdir
     if stem.startswith("model_") and stem.endswith("_best"):
         arch = "_".join(stem.split("_")[:2])
@@ -44,6 +51,7 @@ def _parse_model_tag(model_path: Path):
         return arch, "best_tuning", "Best after tuning", outdir
     outdir = Path("reports") / stem
     return stem, "snapshot", "Snapshot", outdir
+
 
 def main(model_path_str: str):
     model_path = Path(model_path_str)
@@ -69,10 +77,13 @@ def main(model_path_str: str):
     cm_path = outdir / f"inspect_confusion_matrix_{tag}.png"
     rpt_path = outdir / f"classification_report_{tag}.txt"
     title = f"Confusion Matrix – {arch} ({title_add})"
-    evaluation.plot_confusion(res["cm"], config.CLASSES, outpath=str(cm_path), title=title)
+    evaluation.plot_confusion(
+        res["cm"], config.CLASSES, outpath=str(cm_path), title=title
+    )
     evaluation.save_report(res["report_txt"], str(rpt_path))
     print(f"✅ Confusion matrix saved to: {cm_path}")
     print(f"✅ Classification report saved to: {rpt_path}")
+
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:

@@ -26,8 +26,11 @@ def make_callbacks(checkpoint_path=None):
     """
     cbs = [
         tf.keras.callbacks.EarlyStopping(
-            monitor="val_accuracy", mode="max",
-            patience=10, min_delta=1e-3, restore_best_weights=True
+            monitor="val_accuracy",
+            mode="max",
+            patience=10,
+            min_delta=1e-3,
+            restore_best_weights=True,
         ),
         tf.keras.callbacks.ReduceLROnPlateau(
             monitor="val_loss", patience=2, factor=0.5, min_lr=1e-5, cooldown=1
@@ -35,10 +38,13 @@ def make_callbacks(checkpoint_path=None):
     ]
     if checkpoint_path:
         Path(checkpoint_path).parent.mkdir(exist_ok=True, parents=True)
-        cbs.append(tf.keras.callbacks.ModelCheckpoint(
-            checkpoint_path, monitor="val_accuracy", mode="max", save_best_only=True
-        ))
+        cbs.append(
+            tf.keras.callbacks.ModelCheckpoint(
+                checkpoint_path, monitor="val_accuracy", mode="max", save_best_only=True
+            )
+        )
     return cbs
+
 
 def train(model, train_ds, val_ds, epochs=50, callbacks=None, learning_rate=3e-4):
     """
@@ -74,8 +80,11 @@ def train(model, train_ds, val_ds, epochs=50, callbacks=None, learning_rate=3e-4
         )
     t0 = perf_counter()
     history = model.fit(
-        train_ds, validation_data=val_ds,
-        epochs=epochs, callbacks=callbacks, verbose=1,
+        train_ds,
+        validation_data=val_ds,
+        epochs=epochs,
+        callbacks=callbacks,
+        verbose=1,
     )
     runtime = perf_counter() - t0
     return history, runtime
