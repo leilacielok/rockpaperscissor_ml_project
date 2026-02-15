@@ -63,7 +63,7 @@ def train_and_report(model_name, model, train_ds, val_ds, file_paths_val):
 def main():
     # tuning
     if getattr(config, "TUNING", False):
-        tuning.run_from_config()
+        tuning.main()
         raise SystemExit(0)
     # Data
     train_ds, val_ds, file_paths_val = data_utils.load_train_val_stratified(

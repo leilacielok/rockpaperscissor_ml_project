@@ -19,12 +19,11 @@ def run_tuning(
     model_names=("model_a", "model_b", "model_c"),
     search_space=None,
     epochs=20,
-    steps_train=None,   # es. 100 per velocizzare il tuning; None = full
+    steps_train=None,   # es. 100 to speed up tuning; None = full
     steps_val=None,     # es. 30
     checkpoint_dir="models",
     report_csv="reports/tuning_results.csv",
 ):
-    """Esegue tuning su più modelli e iperparametri."""
     if search_space is None:
         search_space = {"lr": [1e-3, 5e-4, 3e-4], "batch": [16, 32], "augment": [True, False]}
 
@@ -89,7 +88,7 @@ def run_final_training(
     checkpoint_path: str = "models/final_best.keras",
     reports_dir: str = "reports",
 ):
-    """Training finale pulito sul best del tuning."""
+    """Final training on best model after tuning."""
     assert best is not None and "model_name" in best, "Best dict miss 'model_name'"
 
     name   = best["model_name"]; lr = float(best["lr"])
@@ -140,75 +139,34 @@ def run_final_training(
 
     return model, history, runtime, res_val
 
-# ----------------- helpers per config / main -----------------
-def _normalize_models(sel):
-    alias = {"a":"model_a","b":"model_b","c":"model_c"}
-    if isinstance(sel, str):
-        tokens = [t.strip().lower() for t in sel.split(",") if t.strip()]
-    elif isinstance(sel, (list, tuple, set)):
-        tokens = [str(t).strip().lower() for t in sel if str(t).strip()]
-    else:
-        raise ValueError("TUNING_MODELS must be str or list/tuple/set")
-    mapped = []
-    for t in tokens:
-        if t not in alias:
-            raise ValueError(f"Invalid model alias: '{t}' (use a,b,c)")
-        m = alias[t]
-        if m not in mapped:
-            mapped.append(m)
-    if not mapped:
-        raise ValueError("No valid model in TUNING_MODELS")
-    return tuple(mapped)
+# ----------------- helpers for config / main -----------------
+def _map_model_token(token):
+    """Map short alias (a,b,c) or full name to canonical model name."""
+    mapping = {
+        "a": "model_a",
+        "b": "model_b",
+        "c": "model_c",
+        "model_a": "model_a",
+        "model_b": "model_b",
+        "model_c": "model_c",
+    }
 
-def run_from_config():
-    """Legge opzioni da config.py e lancia tuning + final training."""
-    model_names = _normalize_models(getattr(config, "TUNING_MODELS", "c"))
-    epochs_tune = getattr(
-        config, "TUNING_EPOCHS",
-        10 if getattr(config, "TUNING_FAST", False) else 20
-    )
-    steps_tr  = getattr(config, "TUNING_STEPS_TRAIN", None)
-    steps_val = getattr(config, "TUNING_STEPS_VAL", None)
+    token = str(token).strip().lower()
+    if token not in mapping:
+        raise ValueError(f"Invalid model name: {token}")
+    return mapping[token]
 
-    # restringi lo spazio se solo C (veloce)
-    search_space = {"lr":[3e-4,5e-4], "batch":[32,64], "augment":[True]} if model_names == ("model_c",) else None
+def main():
+    model_names = [_map_model_token(m) for m in config.TUNING_MODELS]
+    best = run_tuning(
+            model_names=model_names,
+            epochs=config.TUNING_EPOCHS,
+            steps_train=config.TUNING_STEPS_TRAIN,
+            steps_val=config.TUNING_STEPS_VAL,
+        )
+    ckpt = f"models/{best['model_name']}_best.keras"
 
-    if bool(getattr(config, "NO_TUNING", False)):
-        print("[tuning] NO_TUNING=True → avoid the search.")
-        best = {"model_name": model_names[0],
-                "lr": 3e-4 if model_names[0] == "model_c" else 1e-3,
-                "batch": 32, "augment": True}
-        ckpt_name = f"models/{best['model_name']}.keras"  # <-- es.: models/model_a.keras
-    else:
-        best = run_tuning(model_names=model_names, search_space=search_space,
-                          epochs=epochs_tune, steps_train=steps_tr, steps_val=steps_val)
-        ckpt_name = f"models/{best['model_name']}_best.keras"  # <-- es.: models/model_a_best.keras
+    run_final_training(best, epochs=config.FINAL_EPOCHS, checkpoint_path=ckpt)
 
-    final_epochs = getattr(config, "FINAL_EPOCHS", 50)
-    return run_final_training(best, epochs=final_epochs, checkpoint_path=ckpt_name)
-
-# ----------------- CLI opzionale -----------------
 if __name__ == "__main__":
-    import argparse
-    p = argparse.ArgumentParser(description="Run tuning from CLI")
-    p.add_argument("--models", type=str, default="c", help="a,b,c or 'b,c'")
-    p.add_argument("--epochs", type=int, default=None, help="Epoche tuning")
-    p.add_argument("--steps-train", type=int, default=None)
-    p.add_argument("--steps-val", type=int, default=None)
-    p.add_argument("--final-epochs", type=int, default=50)
-    p.add_argument("--no-tuning", action="store_true")
-    p.add_argument("--fast", action="store_true")
-    args = p.parse_args()
-
-    # popola config e riusa run_from_config
-    config.TUNING_MODELS = args.models
-    config.TUNING_FAST = args.fast
-    config.TUNING_EPOCHS = args.epochs if args.epochs is not None else (
-        10 if getattr(config, "TUNING_FAST", False) else 20
-    )
-    config.TUNING_STEPS_TRAIN = args.steps_train
-    config.TUNING_STEPS_VAL = args.steps_val
-    config.FINAL_EPOCHS = args.final_epochs
-    config.NO_TUNING = args.no_tuning
-
-    run_from_config()
+    main()
