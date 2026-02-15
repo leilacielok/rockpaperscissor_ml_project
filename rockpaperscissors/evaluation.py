@@ -7,35 +7,41 @@ from PIL import Image
 from sklearn.metrics import classification_report, confusion_matrix
 
 
-def evaluate_on(ds, model, class_names):
+def evaluate_on(ds, model, class_names, debug=False):
+    """
+    Evaluate `model` on dataset `ds` (one-hot labels expected) and return metrics.
+
+    Returns dict with:
+      - loss, acc (from model.evaluate)
+      - report_txt (sklearn classification_report)
+      - cm (confusion matrix)
+    """
     y_true, y_pred = [], []
+    probs_all = [] if debug else None
+
     for x, y in ds:
         probs = model.predict(x, verbose=0)
         y_pred.append(np.argmax(probs, axis=1))
         y_true.append(np.argmax(y.numpy(), axis=1))
+        if debug:
+            probs_all.append(probs)
+
     y_true = np.concatenate(y_true)
     y_pred = np.concatenate(y_pred)
 
-    # temporary mini-check
-    probs_all = []
-    for x, y in ds:
-        p = model.predict(x, verbose=0)
-        probs_all.append(p)
-    probs_all = np.concatenate(probs_all)
-    print(
-        "val prob max (mean±std):",
-        probs_all.max(axis=1).mean(),
-        probs_all.max(axis=1).std(),
-    )
-    print("val prob mean per classe:", probs_all.mean(axis=0))
+    if debug:
+        probs_all = np.concatenate(probs_all, axis=0)
+        pmax = probs_all.max(axis=1)
+        print("val prob max (mean±std):", pmax.mean(), pmax.std())
+        print("val prob mean per classe:", probs_all.mean(axis=0))
 
-    # explicit labels to avoid bugs
-    labels = list(range(len(class_names)))
+    labels = list(range(len(class_names)))  # explicit labels to avoid bugs
     report_txt = classification_report(
         y_true, y_pred, labels=labels, target_names=class_names, zero_division=0
     )
     cm = confusion_matrix(y_true, y_pred, labels=labels)
     loss, acc = model.evaluate(ds, verbose=0)
+
     return {"loss": loss, "acc": acc, "report_txt": report_txt, "cm": cm}
 
 
@@ -90,7 +96,7 @@ def plot_confusion(
 
 def save_report(report_txt, outpath="reports/classification_report.txt"):
     Path(outpath).parent.mkdir(exist_ok=True, parents=True)
-    with open(outpath, "w") as f:
+    with open(outpath, "w", encoding="utf-8") as f:
         f.write(report_txt)
 
 
@@ -103,6 +109,10 @@ def show_misclassified(
     outpath="reports/misclassified.png",
     pick="confident",
 ):
+    """
+    Save a grid of misclassified examples.
+    NOTE: assumes `file_paths[j]` corresponds to the j-th example produced by `ds`.
+    """
     y_true, y_pred, probs_list = [], [], []
     for x, y in ds:
         probs = model.predict(x, verbose=0)
@@ -113,18 +123,14 @@ def show_misclassified(
     y_true = np.concatenate(y_true)
     y_pred = np.concatenate(y_pred)
     probs_all = np.concatenate(probs_list, axis=0)
-    conf = probs_all.max(axis=1)  # confidence in prediction
+    conf = probs_all.max(axis=1) 
 
     wrong_idxs = np.where(y_true != y_pred)[0]
     if wrong_idxs.size == 0:
         print("No misclassified image in the split.")
         return
 
-    if pick == "confident":
-        order = np.argsort(-conf[wrong_idxs])
-    else:
-        order = np.argsort(conf[wrong_idxs])
-
+    order = np.argsort(-conf[wrong_idxs]) if pick == "confident" else np.argsort(conf[wrong_idxs])
     sel = wrong_idxs[order][:top_n]
 
     n = len(sel)
@@ -146,13 +152,11 @@ def show_misclassified(
     plt.close()
 
 
-# temporary debug function
-def print_class_histogram(ds):
-    import numpy as np
-
+def print_class_histogram(ds, n_classes=3):
+    """Return counts per class over the dataset (one-hot labels expected)."""
     counts = None
     for _, y in ds:
         yt = np.argmax(y.numpy(), axis=1)
-        bins = np.bincount(yt, minlength=3)
+        bins = np.bincount(yt, minlength=n_classes)
         counts = bins if counts is None else counts + bins
     print("Validation class histogram:", counts)
