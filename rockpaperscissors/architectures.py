@@ -3,12 +3,14 @@ import tensorflow as tf
 from rockpaperscissors import config
 
 
+# ----------- Helpers for model c --------------
+
 def conv_ln_act(x, filters, k=3, s=1, act=True):
     """
     Applies a Conv2D → Layer Normalization → ReLU block.
 
     The block is designed for stable training with small batch sizes and is used as a
-    building component in the deeper architecture (model c).
+    building component in the deeper architecture.
 
     Args:
         x as tf.Tensor: input tensor of shape (batch, height, width, channels).

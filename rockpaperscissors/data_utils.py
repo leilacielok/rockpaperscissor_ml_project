@@ -72,7 +72,7 @@ def load_train_val_stratified(
     Returns:
     # train_ds and val_ds as tf.data.Dataset (dataset yielding batches of (image, one-hot label) pairs).
     # file_paths_val as list of str (List of file paths corresponding to the validation samples, useful
-    for external analysis or qualitative inspection).
+    for qualitative inspection).
     """
     # Stratified split
     data_dir = config.DATA_ROOT
