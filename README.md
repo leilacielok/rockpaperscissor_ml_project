@@ -19,6 +19,7 @@ rockpaperscissor_ml_project/
 │   ├── evaluation.py                   # Evaluation metrics, confusion matrices, misclassified samples
 │   ├── training.py                     # Training loop and callbacks
 │   ├── tuning.py                       # Hyperparameter tuning (CLI + run_from_config used by main.py)
+│   ├── visualize_models.py             # png of best models architectures
 │   └── __init__.py                     
 │
 ├── analysis/                           # Explanatory Data Analysis
@@ -156,7 +157,6 @@ TUNING_FAST = False               # optional shortcut: if True and TUNING_EPOCHS
 TUNING_STEPS_TRAIN = None         # e.g., 120 to speed up each trial
 TUNING_STEPS_VAL = None           # e.g., 40
 FINAL_EPOCHS = 50                 # epochs for final training on the best model
-NO_TUNING = False                 # set True to skip tuning
 ```
 ---
 
@@ -250,7 +250,7 @@ reports/
 ├── tuning_results.csv
 ```
 
-### 3️⃣ python external_eval.py — External / Out-of-Distribution Evaluation
+### 3️⃣ python external_eval.py — External / In-Distribution Evaluation
 > Note: This script assumes that a final trained model (e.g., model_c_final) already exists.
 
 Running:
