@@ -6,7 +6,7 @@ from pathlib import Path
 import numpy as np
 import tensorflow as tf
 
-from . import architectures, config, data_utils, evaluation, training
+import architectures, config, data_utils, evaluation, training
 
 
 # ----------------- builders -----------------

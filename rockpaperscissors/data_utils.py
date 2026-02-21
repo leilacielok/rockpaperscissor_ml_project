@@ -5,7 +5,7 @@ import numpy as np
 import tensorflow as tf
 from sklearn.model_selection import train_test_split
 
-from . import config
+import config
 
 AUTOTUNE = tf.data.AUTOTUNE
 
