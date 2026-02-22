@@ -5,7 +5,7 @@ import numpy as np
 import tensorflow as tf
 from sklearn.model_selection import train_test_split
 
-import config
+import rockpaperscissors.config as config
 
 AUTOTUNE = tf.data.AUTOTUNE
 

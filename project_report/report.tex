@@ -341,16 +341,16 @@ A & $5 \times 10^{-4}$ & 16 & No  & 0.9087 \\
 A & $1 \times 10^{-3}$ & 16 & Yes & 0.8584 \\
 B & $1 \times 10^{-3}$ & 16 & No  & 0.9772 \\
 B & $1 \times 10^{-3}$ & 16 & Yes & 0.9840 \\
-C & $3 \times 10^{-4}$ & 16 & No  & 0.9977 \\
-C & $5 \times 10^{-4}$ & 16 & Yes & 0.9954 \\
+C & $5 \times 10^{-4}$ & 32 & No  & 0.9886 \\
+C & $5 \times 10^{-4}$ & 32 & Yes & 0.9932 \\
 \hline
 \end{tabular}
 \end{table}
 
 The final model was selected as the overall 
 best-performing configuration across the entire grid: Model C trained 
-with learning rate $3\times 10^{-4}$, batch size 16, and augmentation 
-disabled achieved the highest validation accuracy observed during 
+with learning rate $5 \times 10^{-4}$, batch size 32, and augmentation 
+enabled achieved the highest validation accuracy observed during 
 tuning. This best configuration was subsequently used for a clean final 
 training run with checkpointing and evaluation artefacts generated 
 accordingly. A detailed comparison of validation performance across 

@@ -15,7 +15,7 @@ EVAL_OUTDIR_PREFIX = "my_hands_"
 EVAL_ALWAYS_SUBDIR = False
 
 
-TUNING = True
+TUNING = False
 TUNING_MODELS = ["c"]  # choose one or more models
 TUNING_EPOCHS = 10
 TUNING_STEPS_TRAIN = None

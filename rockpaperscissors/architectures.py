@@ -1,6 +1,5 @@
 import tensorflow as tf
-import config
-
+import rockpaperscissors.config as config
 
 # ----------- Helpers for model c --------------
 

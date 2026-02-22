@@ -6,8 +6,11 @@ from pathlib import Path
 import numpy as np
 import tensorflow as tf
 
-import architectures, config, data_utils, evaluation, training
-
+import rockpaperscissors.architectures as architectures
+import rockpaperscissors.config as config
+import rockpaperscissors.data_utils as data_utils
+import rockpaperscissors.evaluation as evaluation
+import rockpaperscissors.training as training
 
 # ----------------- builders -----------------
 def _build_model(name, log_priors=None):
