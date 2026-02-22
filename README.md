@@ -321,6 +321,18 @@ Each file contains:
 
 These files are **binary** and cannot be previewed on GitHub, but can be reloaded in Python.
 
+### Generate Architecture Diagrams
+
+This project includes a utility to export PNG diagrams of saved Keras models.
+
+Requirements:
+- Graphviz installed and available in PATH.
+
+```bash
+export PATH="$PATH:/c/Program Files/Graphviz/bin"
+python -m rockpaperscissors.visualize_models
+```
+
 -----
 > *Future Work suggestions*
 > - Extend dataset with more hand gestures;
