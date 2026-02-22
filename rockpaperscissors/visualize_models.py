@@ -69,8 +69,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-    
-    
-# bash
-# export PATH="$PATH:/c/Program Files/Graphviz/bin"
-# python -m rockpaperscissors.visualize_models
