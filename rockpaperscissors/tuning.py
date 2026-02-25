@@ -28,8 +28,8 @@ def run_tuning(
     model_names=("model_a", "model_b", "model_c"),
     search_space=None,
     epochs=20,
-    steps_train=None,  # es. 100 to speed up tuning; None = full
-    steps_val=None,  # es. 30
+    steps_train=None, 
+    steps_val=None,  
     checkpoint_dir="models",
     report_csv="reports/tuning_results.csv",
 ):
