@@ -174,18 +174,6 @@ Enable tuning from your project’s `config.py` (```TUNING = True```), then run 
    - Generate reports and plots in ```/reports/```
    - Automatically evaluate the best model on the external test set `rps-cv-images`
 
-3. **Run external evaluation only**:
-
-    ```bash
-    python external_eval.py
-    ```
-
-   - Load a previously trained final model
-   - Evaluate it on `rps-cv-images`
-   - Generate external classification report and confusion matrix
-   - Does **not** retrain the model
-
-
 --- 
 ## 📁 Reports & Outputs
 
