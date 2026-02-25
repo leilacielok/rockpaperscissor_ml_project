@@ -86,7 +86,7 @@ The project trains and compares **three CNN architectures**:
   Lightweight model using **SeparableConv2D** and **GAP** for parameter efficiency.  
 
 - **`model_c`**:  
-  Residual CNN with projection shortcuts, **label smoothing**, and **dropout** for regularization.  
+  Residual CNN with identity shortcut connections, **label smoothing**, and **dropout** for regularization.  
 
 All models use:
 - **Adam optimizer** (default LR `3e-4`)  
