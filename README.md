@@ -90,8 +90,8 @@ The project trains and compares **three CNN architectures**:
 
 All models use:
 - **Adam optimizer** (default LR `3e-4`)  
-- **Categorical cross-entropy** loss (with label smoothing)  
-- Accuracy as the main metric  
+- **Categorical cross-entropy** loss
+- **Accuracy** as the main metric  
 
 ---
 
