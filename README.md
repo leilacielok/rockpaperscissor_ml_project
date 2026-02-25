@@ -52,16 +52,15 @@ data/
 └── scissors/
 ```
 
-- Each folder contains images of the corresponding gesture.  
 - An **external test set** was added in `data/rps-cv-images/`.
 - Optional **custom real-world dataset** (`my_hands_data`): manually collected set of hand gesture images organized as:
   ```
   data/
-  ├── my_hands_data/
+  └── my_hands_data/
       ├── rock/
       ├── paper/
       └── scissors/
-
+```
 ### Cleaning
 - Images are automatically resized to **(IMG_SIZE, IMG_SIZE)** as defined in `config.py` (`96×96`)  
 - Pixel values are normalized in `[0, 1]`.  
