@@ -112,23 +112,28 @@ All models use:
 
    **Generalization Test**
    
-   To further evaluate the **generalization capability** of the models, we tested them on a **custom dataset** of hand gesture photos.
-   The images were organized into subfolders:
-   ```
-   my_hands/
-   ├── rock/
-   ├── paper/
-   └── scissors/
-   ```
-   Run the evaluation with:
+   Beyond the standard validation split, models are evaluated on external datasets to assess robustness under distribution shift.
+   
+   Two complementary tests are performed:
 
-   ```bash
-   python evaluate_myhands.py --dir data/my_hands_data --model models/model_*_best.keras  --outdir reports\custom_eval_myhands\myhands_model_*
-   ```
-   This generates:
-   - custom_classification_report.txt → precision, recall, f1-score 
-   - custom_confusion_matrix.png → confusion matrix on the custom dataset 
-   - custom_misclassified.png → a grid of misclassified examples (if any)
+   1. Structured external test set
+      `rps-cv-images` dataset loaded via `image_dataset_from_directory` (same normalization and class order as training).
+
+   2. Custom real-world dataset
+      `my_hands_data`, a manually collected set of hand gesture images organized as:
+      ```
+      my_hands/
+      ├── rock/
+      ├── paper/
+      └── scissors/
+      ```
+      ```bash
+      python evaluate_myhands.py --dir data/my_hands_data --model models/model_*_best.keras  --outdir reports\custom_eval_myhands\myhands_model_*
+      ```
+      This generates:
+      - custom_classification_report.txt → precision, recall, f1-score 
+      - custom_confusion_matrix.png → confusion matrix on the custom dataset 
+      - custom_misclassified.png → a grid of misclassified examples (if any)
 
 ---
 
