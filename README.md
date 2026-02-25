@@ -152,18 +152,8 @@ python -m rockpaperscissors.tuning --models b,c --fast --steps-train 120 --steps
 ```
 ### Option B — Run from `main.py` via config
 
-Enable tuning from your project’s `config.py`, then run `main.py`. The main will short-circuit into the tuner and stop after the final training of the best config.
+Enable tuning from your project’s `config.py` (```TUNING = True```), then run `main.py`. The main will short-circuit into the tuner and stop after the final training of the best config.
 
-**`config.py` example**
-```python
-TUNING = True                     # enable tuning path
-TUNING_MODELS = "c"               # e.g., "b,c" or ["a","b","c"]
-TUNING_EPOCHS = 12                # default 20 (or 10 if TUNING_FAST=True)
-TUNING_FAST = False               # optional shortcut: if True and TUNING_EPOCHS not set, uses 10
-TUNING_STEPS_TRAIN = None         # e.g., 120 to speed up each trial
-TUNING_STEPS_VAL = None           # e.g., 40
-FINAL_EPOCHS = 50                 # epochs for final training on the best model
-```
 ---
 
 ## ▶️ How to Run
