@@ -133,19 +133,20 @@ All models use:
 ## 🔍 Hyperparameter Tuning
 
 Tuning is handled via `rockpaperscissors/tuning.py`.
+The search space (learning rate, batch size, data augmentation) is defined in `config.py`.
 
-### Option A — Run from CLI
-**`CLI` example**
+### Option A — Run tuning directly
 ```bash
-# Model C only, 12 epochs
-python -m rockpaperscissors.tuning --models c --epochs 12
-
-# Models B and C, fast preset, limited steps per trial
-python -m rockpaperscissors.tuning --models b,c --fast --steps-train 120 --steps-val 40
+python -m rockpaperscissors.tuning 
 ```
-### Option B — Run from `main.py` via config
 
-Enable tuning from your project’s `config.py` (```TUNING = True```), then run `main.py`. The main will short-circuit into the tuner and stop after the final training of the best config.
+### Option B — Run from the main script
+
+Enable tuning in`config.py` by setting ```TUNING = True```, then run 
+```bash
+python main.py
+```
+`main.py` will delegate execution to the tuning pipeline and exit after the final training of the best configuration.
 
 ---
 
