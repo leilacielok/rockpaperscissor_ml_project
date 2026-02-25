@@ -164,7 +164,7 @@ Enable tuning from your project’s `config.py` (```TUNING = True```), then run 
     pip install -r requirements.txt
     ```
 
-2. **Train and evaluate models**:
+2. **Train and evaluate models (full pipeline)**:
 
     ```bash
     python main.py
@@ -172,17 +172,18 @@ Enable tuning from your project’s `config.py` (```TUNING = True```), then run 
    - Train the three architectures 
    - Save trained models in ```/models/``` 
    - Generate reports and plots in ```/reports/```
+   - Automatically evaluate the best model on the external test set `rps-cv-images`
 
-3. **Run external evaluation only on in-distribution dataset**:
+3. **Run external evaluation only**:
 
     ```bash
     python external_eval.py
     ```
 
    - Load a previously trained final model
-   - Evaluate it on an external dataset (`rps-cv-images`)
+   - Evaluate it on `rps-cv-images`
    - Generate external classification report and confusion matrix
-   - Does **not** retrain or modify the models
+   - Does **not** retrain the model
 
 
 --- 
