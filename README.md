@@ -1,7 +1,7 @@
 # Rock-Paper-Scissors CNN Classifier 
 
-[![Python 3.10](https://img.shields.io/badge/python-3.10-blue.svg)](https://www.python.org/downloads/release/python-3100/)
-[![TensorFlow 2.12](https://img.shields.io/badge/TensorFlow-2.12-FF6F00?logo=tensorflow)](https://www.tensorflow.org/)
+[![Python 3.12](https://img.shields.io/badge/python-3.12-blue.svg)](https://www.python.org/)
+[![TensorFlow 2.20](https://img.shields.io/badge/TensorFlow-2.20-FF6F00?logo=tensorflow)](https://www.tensorflow.org/)
 [![Keras](https://img.shields.io/badge/Keras-Deep%20Learning-D00000?logo=keras)](https://keras.io/)
 
 This project implements **Convolutional Neural Networks (CNNs)** to classify images of hand gestures representing the **Rock–Paper–Scissors** game.  
@@ -18,7 +18,7 @@ rockpaperscissor_ml_project/
 │   ├── data_utils.py                   # Data loading, cleaning, preprocessing, augmentation
 │   ├── evaluation.py                   # Evaluation metrics, confusion matrices, misclassified samples
 │   ├── training.py                     # Training loop and callbacks
-│   ├── tuning.py                       # Hyperparameter tuning (CLI + run_from_config used by main.py)
+│   ├── tuning.py                       # Hyperparameter tuning (config-driven)
 │   ├── visualize_models.py             # png of best models architectures
 │   └── __init__.py                     
 │
@@ -35,9 +35,26 @@ rockpaperscissor_ml_project/
 └── requirements.txt                    
 
 ```
+---
+
+## 🚀 Installation
+```bash
+pip install -r requirements.txt
+```
+
+## ▶️ Quick Start (full pipeline)
+```bash
+python main.py
+```
+This will: 
+- Train the three architectures 
+- Evaluate on the validation split
+- Select the best model and evaluate it on the external test set
+- Save trained models in ```/models/``` 
+- Generate reports and plots in ```/reports/```
 
 ---
-## 🧹 Dataset Preparation, Cleaning & Splitting
+## 🧹 Dataset Preparation & Preprocessing
 
 The dataset is available on Kaggle:  
 👉 [Rock-Paper-Scissors Dataset](https://www.kaggle.com/datasets/drgfreeman/rockpaperscissors)
@@ -86,87 +103,55 @@ When enabled, the training set undergoes lightweight (random) augmentation:
 The project trains and compares **three CNN architectures**:
 
 - **`model_a`**:  
-  Baseline CNN with a few convolutional + dense layers.  
+  Lightweight CNN based on SeparableConv2D layers and Global Average Pooling for parameter efficiency. 
 
 - **`model_b`**:  
-  Lightweight model using **SeparableConv2D** and **GAP** for parameter efficiency.  
+  Conventional shallow CNN using standard Conv2D layers followed by flattening and a dense classifier.
 
 - **`model_c`**:  
-  **Residual** CNN with identity shortcut connections, **label smoothing**, and **dropout** for regularization.  
+  Residual CNN with identity shortcut connections, depthwise separable blocks, and dropout for regularization. 
 
+### 🔧 Training Configuration
 All models use:
-- **Adam optimizer** (default LR `3e-4`)  
-- **Categorical cross-entropy** loss
-- **Accuracy** as the main metric  
+- Adam optimizer 
+- Categorical cross-entropy with label smoothing
+- Accuracy as main metric  
+- EarlyStopping, ReduceLROnPlateau, ModelCheckpoint
 
 ---
 
-## ⚙️ Training Pipeline
+## 🔍 External & Generalization Evaluation
+1. Structured external test set
+  `rps-cv-images` loaded via `image_dataset_from_directory`
 
-1. **Data loading** → handled by `data_utils.py`.  
-2. **Model selection** → defined in `architectures.py`.  
-3. **Training loop** → controlled by `training.py` with callbacks:
-   - EarlyStopping (patience on validation loss)  
-   - ReduceLROnPlateau (LR scheduling)  
-   - ModelCheckpoint (best model saving)  
+2. Custom real-world dataset
+  `my_hands_data` loaded via a custom `tf.data` pipeline with:
+  - PIL decoding
+  - EXIF correction
+  - Resize with padding
+  - Manual one-hot encoding
 
-4. **Evaluation** → executed in `evaluation.py`, producing:
-   - Classification report (`precision`, `recall`, `f1-score`)  
-   - Confusion matrix plots  
-   - Training curves (loss & accuracy)  
-   - Grids of **most confident misclassified images**  
-
-   **Generalization Test**
-   
-   Beyond the standard validation split, models are evaluated on external datasets to assess robustness under distribution shift.
-   
-   Two complementary tests are performed:
-
-   1. Structured external test set
-      `rps-cv-images` dataset loaded via `image_dataset_from_directory` (same normalization and class order as training).
-
-   2. Custom real-world dataset
-      `my_hands_data` dataset loaded via a custom tf.data pipeline (PIL to decode images, EXIF orientation correction, RGB
-      conversion, resizing with padding, manual one-hot label encoding)
+Run
+```bash
+python evaluate_myhands.py --dir data/my_hands_data --model models/model_x_best.keras
+```
 ---
-
 ## 🔍 Hyperparameter Tuning
 
 Tuning is handled via `rockpaperscissors/tuning.py`.
 The search space (learning rate, batch size, data augmentation) is defined in `config.py`.
 
-### Option A — Run tuning directly
+### Run tuning directly
 ```bash
 python -m rockpaperscissors.tuning 
 ```
 
-### Option B — Run from the main script
+### Or enable via config
 
-Enable tuning in`config.py` by setting ```TUNING = True```, then run 
+Set ```TUNING = True```, then:
 ```bash
 python main.py
 ```
-`main.py` will delegate execution to the tuning pipeline and exit after the final training of the best configuration.
-
----
-
-## ▶️ How to Run
-
-1. **Install requirements**:
-
-    ```bash
-    pip install -r requirements.txt
-    ```
-
-2. **Train and evaluate models (full pipeline)**:
-
-    ```bash
-    python main.py
-    ```
-   - Train the three architectures 
-   - Save trained models in ```/models/``` 
-   - Generate reports and plots in ```/reports/```
-   - Automatically evaluate the best model on the external test set `rps-cv-images`
 
 --- 
 ## 📁 Reports & Outputs
