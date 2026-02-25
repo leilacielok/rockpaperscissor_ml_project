@@ -83,7 +83,7 @@ The project trains and compares **three CNN architectures**:
   Baseline CNN with a few convolutional + dense layers.  
 
 - **`model_b`**:  
-  Lightweight model using **SeparableConv2D** for efficiency.  
+  Lightweight model using **SeparableConv2D** and **GAP** for parameter efficiency.  
 
 - **`model_c`**:  
   Residual CNN with projection shortcuts, **label smoothing**, and **dropout** for regularization.  
