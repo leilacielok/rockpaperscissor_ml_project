@@ -29,8 +29,8 @@ rockpaperscissor_ml_project/
 ├── reports/                            # Plots, classification reports, confusion matrices, tuning CSV
 ├── models/                             # Saved trained models (.keras)
 ├── project_report/                     # project report in LaTeX
-├── evaluate_myhands.py                 # (Utility) Evaluate on custom “my hands” images
-├── external_eval.py                    # (Utility) Evaluate on external test "rps-cv-images" images
+├── evaluate_myhands.py                 # Evaluate on custom “my hands” images
+├── external_eval.py                    # Evaluate on external test "rps-cv-images" images
 ├── inspect_model.py                    # (Utility) Model inspection / summaries / parameter counts
 └── requirements.txt                    
 
