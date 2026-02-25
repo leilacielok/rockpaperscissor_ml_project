@@ -29,8 +29,8 @@ rockpaperscissor_ml_project/
 ├── reports/                            # Plots, classification reports, confusion matrices, tuning CSV
 ├── models/                             # Saved trained models (.keras)
 ├── project_report/                     # project report in LaTeX
-├── evaluate_myhands.py                 # (Utility) Evaluate on custom “my hands” images
-├── external_eval.py                    # (Utility) Evaluate on external test "rps-cv-images" images
+├── evaluate_myhands.py                 # Evaluate on custom “my hands” images
+├── external_eval.py                    # Evaluate on external test "rps-cv-images" images
 ├── inspect_model.py                    # (Utility) Model inspection / summaries / parameter counts
 └── requirements.txt                    
 
@@ -58,7 +58,7 @@ data/
 ### Cleaning
 - Images are automatically resized to **(IMG_SIZE, IMG_SIZE)** as defined in `config.py` (`96×96`)  
 - Pixel values are normalized in `[0, 1]`.  
-- Label encoding is handled by TensorFlow’s `image_dataset_from_directory`.
+- Training/validation labels are manually encoded, while the external test set uses TensorFlow’s `image_dataset_from_directory`.
 
 ### Splitting
 - The dataset is split into **training (80%)** and **validation (20%)**.  
@@ -66,10 +66,12 @@ data/
 - External test images are never seen during training.
 
 ### Data Augmentation
-When enabled, the training set undergoes lightweight augmentation:
-- Random horizontal flips  
-- Random rotations (±10%)  
-- Random zoom  
+When enabled, the training set undergoes lightweight (random) augmentation:
+- horizontal flips  
+- rotations (±0.08 of a full turn ≈ ±29°)  
+- zoom  (±10%)
+- translations (up to 8% in both directions)
+- contrast adjustment (±5%)
 
 ---
 
@@ -81,15 +83,15 @@ The project trains and compares **three CNN architectures**:
   Baseline CNN with a few convolutional + dense layers.  
 
 - **`model_b`**:  
-  Lightweight model using **SeparableConv2D** for efficiency.  
+  Lightweight model using **SeparableConv2D** and **GAP** for parameter efficiency.  
 
 - **`model_c`**:  
-  Residual CNN with projection shortcuts, **label smoothing**, and **dropout** for regularization.  
+  Residual CNN with identity shortcut connections, **label smoothing**, and **dropout** for regularization.  
 
 All models use:
 - **Adam optimizer** (default LR `3e-4`)  
-- **Categorical cross-entropy** loss (with label smoothing)  
-- Accuracy as the main metric  
+- **Categorical cross-entropy** loss
+- **Accuracy** as the main metric  
 
 ---
 
@@ -108,7 +110,8 @@ All models use:
    - Training curves (loss & accuracy)  
    - Grids of **most confident misclassified images**  
 
-   **Generalization Test with custom images**
+   **Generalization Test**
+   
    To further evaluate the **generalization capability** of the models, we tested them on a **custom dataset** of hand gesture photos.
    The images were organized into subfolders:
    ```
@@ -120,9 +123,7 @@ All models use:
    Run the evaluation with:
 
    ```bash
-   python evaluate_myhands.py --dir data/my_hands_data --model models/model_a_best.keras  --outdir reports\custom_eval_myhands\myhands_model_a
-   python evaluate_myhands.py --dir data/my_hands_data --model models/model_b_best.keras  --outdir reports\custom_eval_myhands\myhands_model_b
-   python evaluate_myhands.py --dir data/my_hands_data --model models/model_c_best.keras  --outdir reports\custom_eval_myhands\myhands_model_c
+   python evaluate_myhands.py --dir data/my_hands_data --model models/model_*_best.keras  --outdir reports\custom_eval_myhands\myhands_model_*
    ```
    This generates:
    - custom_classification_report.txt → precision, recall, f1-score 
