@@ -58,7 +58,7 @@ data/
 ### Cleaning
 - Images are automatically resized to **(IMG_SIZE, IMG_SIZE)** as defined in `config.py` (`96×96`)  
 - Pixel values are normalized in `[0, 1]`.  
-- Label encoding is handled by TensorFlow’s `image_dataset_from_directory`.
+- Training/validation labels are manually encoded, while the external test set uses TensorFlow’s `image_dataset_from_directory`.
 
 ### Splitting
 - The dataset is split into **training (80%)** and **validation (20%)**.  
