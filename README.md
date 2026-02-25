@@ -131,10 +131,10 @@ All models use:
   - Resize with padding
   - Manual one-hot encoding
 
-Run
-```bash
-python evaluate_myhands.py --dir data/my_hands_data --model models/model_x_best.keras
-```
+  Run
+  ```bash
+  python evaluate_myhands.py --dir data/my_hands_data --model models/model_x_best.keras
+  ```
 ---
 ## 🔍 Hyperparameter Tuning
 
