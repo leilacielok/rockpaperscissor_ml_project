@@ -110,7 +110,8 @@ All models use:
    - Training curves (loss & accuracy)  
    - Grids of **most confident misclassified images**  
 
-   **Generalization Test with custom images**
+   **Generalization Test**
+   
    To further evaluate the **generalization capability** of the models, we tested them on a **custom dataset** of hand gesture photos.
    The images were organized into subfolders:
    ```
