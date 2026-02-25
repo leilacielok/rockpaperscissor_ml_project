@@ -92,7 +92,7 @@ The project trains and compares **three CNN architectures**:
   Lightweight model using **SeparableConv2D** and **GAP** for parameter efficiency.  
 
 - **`model_c`**:  
-  Residual CNN with identity shortcut connections, **label smoothing**, and **dropout** for regularization.  
+  **Residual** CNN with identity shortcut connections, **label smoothing**, and **dropout** for regularization.  
 
 All models use:
 - **Adam optimizer** (default LR `3e-4`)  
@@ -253,15 +253,14 @@ Purpose
 * Evaluate generalization on custom, real-world images
 * Use labeled folder structure as ground truth
 
-### 5️⃣ python inspect_model.py — Model Inspection 
-Running: 
+### 5️⃣ Model Inspection 
 ```bash
-python inspect_model.py models/model_c_best.keras 
+python inspect_model.py models/model_x_best.keras 
 ```
 produces:
 ```
 reports/
-└── model_c_final/   (or model_c/)
+└── model_x_final/   (or model_c/)
     ├── inspect_confusion_matrix_best.png
     └── classification_report_best.txt
 ```
@@ -280,7 +279,7 @@ Each file contains:
 
 - the **architecture** (layers, activations, etc.)  
 - the **trained weights**  
-- the **optimizer state** (useful to resume training)  
+- the **optimizer state** 
 
 These files are **binary** and cannot be previewed on GitHub, but can be reloaded in Python.
 
