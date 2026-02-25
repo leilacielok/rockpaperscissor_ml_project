@@ -168,12 +168,6 @@ FINAL_EPOCHS = 50                 # epochs for final training on the best model
     ```bash
     pip install -r requirements.txt
     ```
-   Main requirements:
-    - tensorflow >= 2.12 
-    - numpy 
-    - matplotlib 
-    - scikit-learn 
-    - pillow
 
 2. **Train and evaluate models**:
 
