@@ -66,10 +66,12 @@ data/
 - External test images are never seen during training.
 
 ### Data Augmentation
-When enabled, the training set undergoes lightweight augmentation:
-- Random horizontal flips  
-- Random rotations (±10%)  
-- Random zoom  
+When enabled, the training set undergoes lightweight (random) augmentation:
+- horizontal flips  
+- rotations (±0.08 of a full turn ≈ ±29°)  
+- zoom  (±10%)
+- translations (up to 8% in both directions)
+- contrast adjustment (±5%)
 
 ---
 
