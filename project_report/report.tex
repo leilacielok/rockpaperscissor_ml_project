@@ -197,7 +197,7 @@ fair and unbiased evaluation protocol.
 \subsection{Design of CNN Architectures with Incremental Complexity}
 
 The three convolutional neural network architectures evaluated in this 
-study were explicitly designed to form a controlled complexity hierarchy, 
+study were designed to form a controlled complexity hierarchy, 
 in which representational capacity, depth, and regularization mechanisms 
 are progressively increased while keeping the input resolution and 
 training protocol fixed.
@@ -230,7 +230,7 @@ Residual shortcuts are applied only when spatial resolution and channel dimensio
 match, ensuring improved gradient flow without introducing additional projection parameters.
 
 The network is organized into stages operating at decreasing spatial resolutions 
-(48$\times$48, 24$\times$24, 12$\times$12)through progressive strided downsampling, 
+(48$\times$48, 24$\times$24, 12$\times$12) through progressive strided downsampling, 
 enabling the learning of hierarchical representations ranging from local edge-like 
 features to more abstract, gesture-level patterns. Layer normalization is systematically 
 employed to stabilize optimization under small-batch training conditions.
