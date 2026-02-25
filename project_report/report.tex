@@ -200,42 +200,122 @@ The three convolutional neural network architectures evaluated in this
 study were designed to form a controlled complexity hierarchy, 
 in which representational capacity, depth, and regularization mechanisms 
 are progressively increased while keeping the input resolution and 
-training protocol fixed.
+training protocol fixed. Formally, each model defines a mapping 
+$f(\mathbf{x}_0; \Theta)$ from an input image 
+$\mathbf{x}_0 \in \mathbb{R}^{H \times W \times 3}$ 
+to class probabilities via a softmax layer.
 
+\paragraph{Model A.}
 Model A is a deliberately lightweight architecture intended as a minimal 
 baseline. It relies on a small number of depthwise-separable convolutional 
-layers followed by max-pooling and a shallow fully connected head. The use 
-of separable convolutions significantly reduces the number of trainable 
+layers followed by max-pooling operations:
+
+\[
+\mathbf{x}_{l+1}
+=
+\sigma\!\left(\texttt{SepConv}(\mathbf{x}_l)\right),
+\qquad
+\mathbf{x}_{l+2} = \texttt{MaxPool}(\mathbf{x}_{l+1})
+\]
+
+After three such stages, global average pooling (GAP) is applied:
+
+\[
+\mathbf{z} = \texttt{GAP}(\mathbf{x}_L),
+\]
+
+followed by a small dense head with dropout:
+
+\[
+\hat{\mathbf{y}} = 
+\texttt{Softmax}(W_2 \, \texttt{ReLU}(W_1 \mathbf{z})).
+\]
+
+The use of separable convolutions significantly reduces the number of trainable 
 parameters and computational cost, enforcing a strong inductive bias toward 
-learning coarse, low-level spatial patterns. A global average pooling layer 
-is employed before the dense classifier, further limiting the model's 
-capacity to memorize spatially localized features. As a result, model A 
+learning coarse spatial patterns. The adoption of global average pooling further 
+limits the model's capacity to memorize spatially localized features. As a result, model A 
 primarily captures global shape cues rather than fine-grained gesture details.
 
+\paragraph{Model B.}
 Model B represents a modest increase in expressiveness and corresponds to 
 a conventional shallow CNN. It employs standard convolutional layers 
-followed by max-pooling and a fully connected classifier operating on 
-flattened feature maps. Compared to model A, this design substantially increases 
-parameter count and spatial flexibility, but lacks explicit architectural 
-regularization mechanisms beyond implicit constraints imposed by depth 
-and pooling. This makes model B more expressive but also more prone to 
+interleaved with max-pooling 
+
+\[
+\mathbf{x}_{l+1}
+=
+\sigma\!\left(\texttt{Conv2D}(\mathbf{x}_l)\right),
+\qquad
+\mathbf{x}_{l+2} = \texttt{MaxPool}(\mathbf{x}_{l+1})
+\]
+
+After two convolution–pooling stages, spatial feature maps are flattened:
+
+\[
+\mathbf{z} = \texttt{Flatten}(\mathbf{x}_L),
+\]
+
+and passed through a dense classifier:
+
+\[
+\hat{\mathbf{y}} =
+\texttt{Softmax}(W_2 \, \texttt{ReLU}(W_1 \mathbf{z})).
+\]
+
+Compared to model A, this design substantially increases 
+parameter count and spatial flexibility, but reduces the implicit spatial 
+regularization induced by global pooling. 
+This makes model B more expressive but also more prone to 
 sensitivity under distributional shifts, as later evidenced in the 
-out-of-distribution evaluation.
+evaluation on the custom dataset.
 
-Model C is a custom-designed architecture optimized for stable training 
-and robust feature extraction under constrained data regimes. It starts with a 
-strided convolutional stem followed by repeated blocks composed of depthwise separable 
-convolutions, layer normalization, and conditional identity residual connections. 
-Residual shortcuts are applied only when spatial resolution and channel dimensionality 
-match, ensuring improved gradient flow without introducing additional projection parameters.
+\paragraph{Model C.}
+Model C is a deeper architecture optimized for stable training and robust 
+feature extraction under constrained data regimes. It starts with a 
+strided convolutional stem:
 
-The network is organized into stages operating at decreasing spatial resolutions 
-(48$\times$48, 24$\times$24, 12$\times$12) through progressive strided downsampling, 
-enabling the learning of hierarchical representations ranging from local edge-like 
-features to more abstract, gesture-level patterns. Layer normalization is systematically 
-employed to stabilize optimization under small-batch training conditions.
-Finally, a global average pooling head followed by a compact dense layer ensures that 
-classification decisions are based on aggregated semantic information rather than localized activations.
+\[
+\mathbf{x}_1 = \texttt{Conv}_{s=2}(\mathbf{x}_0),
+\]
+
+followed by repeated blocks composed of depthwise separable convolutions
+with layer normalization. Let $F(\mathbf{x};\theta)$ denote the composite 
+transformation implemented by a depthwise separable block including 
+convolution, normalization, and nonlinearity.
+Residual connections are conditionally applied as:
+
+\[
+\mathbf{y} =
+\begin{cases}
+F(\mathbf{x}; \theta) + \mathbf{x}, & \text{if } s = 1 \text{ and } C_{\text{in}} = C_{\text{out}}, \\
+F(\mathbf{x}; \theta), & \text{otherwise}.
+\end{cases}
+\]
+
+Unlike classical ResNet architectures, no projection shortcut is used when 
+dimensions change, keeping the block lightweight while preserving identity-based 
+gradient flow whenever tensor shapes match.
+
+Spatial resolution is reduced progressively through strided convolutions 
+rather than pooling, leading to feature maps at resolutions 
+$48\times48$, $24\times24$, and $12\times12$. After staged processing, 
+global average pooling aggregates spatial information:
+
+\[
+\mathbf{z} = \texttt{GAP}(\mathbf{x}_L),
+\]
+
+followed by a compact dense head with dropout:
+
+\[
+\hat{\mathbf{y}} =
+\texttt{Softmax}(W_2 \, \texttt{Dropout}(\texttt{ReLU}(W_1 \mathbf{z}))).
+\]
+
+Layer normalization is systematically employed to stabilize optimization 
+under small-batch training conditions, while residual connections facilitate 
+gradient propagation through deeper stacks of layers.
 
 \paragraph{Model capacity and parameterization.}
 
@@ -277,36 +357,37 @@ Several design decisions were made to ensure training stability, fair comparison
 and robustness, particularly given the relatively small size and homogeneity of 
 the training dataset.
 
-First, depthwise separable convolutions are employed extensively in models A and C. 
-This choice reduces parameter count while preserving the ability to model spatial 
-structure, making it well-suited for scenarios where overfitting is a concern. In 
-model C, separable convolutions are combined with residual connections, allowing 
-gradients to propagate effectively through deeper stacks of layers and mitigating 
-degradation effects commonly observed in deeper CNNs.
+First, depthwise separable convolutions are employed in Models A and C. In Model A, 
+Keras \texttt{SeparableConv2D} layers are used to reduce parameter count and computational cost 
+while preserving spatial modeling capacity. In Model C, separable convolutions are 
+implemented explicitly via depthwise and pointwise operations and are combined with 
+conditional residual connections. These residual shortcuts are applied only when spatial 
+resolution and channel dimensionality match, improving gradient flow without introducing 
+projection parameters.
 
-Second, Layer Normalization (LN) is used instead of Batch Normalization in model C. 
+Second, Layer Normalization (LN) is used instead of Batch Normalization in Model C. 
 Since training is performed with relatively small batch sizes and with data augmentation 
 enabled, LN provides more stable normalization statistics that are independent of batch 
 composition. This choice improves convergence consistency and reduces sensitivity to 
-batch-size variations during both tuning and final training.
+batch-size variations.
 
-Third, across all architectures (models A, B, and C), progressive spatial downsampling 
-is implemented via strided convolutions rather than aggressive pooling. This preserves 
-more information during early stages while still reducing computational complexity, 
-enabling the networks to retain discriminative spatial cues relevant for fine-grained 
-hand gesture recognition.
+Third, spatial downsampling strategies differ across architectures. Models A and B rely on 
+MaxPooling layers for progressive spatial reduction, whereas Model C performs downsampling 
+through strided convolutions (both in the initial stem and in depthwise blocks). This design 
+allows Model C to learn feature extraction and resolution reduction jointly, preserving richer 
+intermediate representations.
 
-At the classification stage, all models adopt global average pooling in place of flattening, 
-enforcing translation invariance and reducing the risk of overfitting by preventing the 
-classifier from relying on specific spatial positions. In addition, a modest dropout rate 
-is applied to the final dense layer across architectures to further discourage co-adaptation 
-of high-level features.
+At the classification stage, Models A and C adopt Global Average Pooling, which enforces 
+translation invariance and reduces overfitting by limiting the number of trainable parameters 
+in the classifier. In contrast, Model B uses flattening, resulting in a higher-capacity fully 
+connected head. Dropout regularization is applied in Models A and C before the final classifier, 
+whereas Model B relies solely on architectural simplicity for regularization.
 
-Finally, label smoothing is applied uniformly across all models. This choice regularizes the 
-softmax outputs by preventing overconfident predictions, which is particularly important when 
-models are evaluated under domain shift. In model C, the option to initialize output biases 
-using empirical class priors further stabilizes early training dynamics and reduces class 
-collapse effects observed in simpler architectures.
+Label smoothing is applied uniformly across all models through the categorical cross-entropy 
+loss, preventing overconfident predictions and improving robustness under domain shift. In 
+Model C, the optional initialization of output biases using empirical log-prior class 
+probabilities further stabilizes early training dynamics, particularly in the presence of mild 
+class imbalance.
 
 \paragraph{Training optimization and regularization.}
 Across all architectures, optimization is performed with the Adam optimizer. Training is 
@@ -314,7 +395,6 @@ regularized through early stopping monitored on validation accuracy and an adapt
 learning-rate schedule (ReduceLROnPlateau), which lowers the learning rate when validation 
 performance stagnates. Together, these mechanisms improve training stability and convergence
 behaviour, while limiting unnecessary computation once progress plateaus.
-
 
 \subsection{Hyperparameter Tuning and Final Model Selection}
 
