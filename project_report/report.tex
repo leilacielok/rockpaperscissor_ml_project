@@ -203,13 +203,18 @@ in which representational capacity, depth, and regularization mechanisms
 are progressively increased while keeping the input resolution and 
 training protocol fixed. 
 
-To make this incremental increase in representational capacity explicit,
+Formally, each model defines a mapping 
+$f(\mathbf{x}_0; \Theta)$ from an input image 
+$\mathbf{x}_0 \in \mathbb{R}^{H \times W \times 3}$ 
+to class probabilities via a softmax layer.
+
+To make the concept of incremental increase in model capacity more explicit,
 Table~\ref{tab:model_capacity} reports the number of trainable parameters
 and effective model size for each architecture.
 
 \begin{table}[h]
 \centering
-\caption{Model capacity comparison across architectures.}
+\caption{Number of trainable parameters and model size across architectures.}
 \label{tab:model_capacity}
 \begin{tabular}{lcc}
 \hline
@@ -224,10 +229,6 @@ Model C & 45{,}523  & 178~KB \\
 \end{tabular}
 \end{table}
 
-Formally, each model defines a mapping 
-$f(\mathbf{x}_0; \Theta)$ from an input image 
-$\mathbf{x}_0 \in \mathbb{R}^{H \times W \times 3}$ 
-to class probabilities via a softmax layer.
 
 \paragraph{Model A.}
 Model A is a deliberately lightweight architecture intended as a minimal 
@@ -289,7 +290,7 @@ and passed through a dense classifier:
 \]
 
 Compared to model A, this design substantially increases 
-parameter count (249,331 parameters) and spatial flexibility, but 
+parameter count (249,331 trainable parameters) and spatial flexibility, but 
 reduces the implicit spatial regularization induced by global pooling. 
 This makes model B more expressive but also more prone to 
 sensitivity under distributional shifts, as later evidenced in the 
@@ -297,8 +298,8 @@ evaluation on the custom dataset.
 
 \paragraph{Model C.}
 Model C is a deeper architecture optimized for stable training and robust 
-feature extraction under constrained data regimes, by achieving a 
-favorable capacity–efficiency trade-off with 45,523 trainable parameters. 
+feature extraction under constrained data regimes. With 45,523 trainable 
+parameters, it achieves a favorable capacity–efficiency trade-off. 
 The architecture starts with a strided convolutional stem:
 
 \[
@@ -339,41 +340,35 @@ followed by a compact dense head with dropout:
 \texttt{Softmax}(W_2 \, \texttt{Dropout}(\texttt{ReLU}(W_1 \mathbf{z}))).
 \]
 
-Layer normalization is systematically employed to stabilize optimization 
-under small-batch training conditions, while residual connections facilitate 
-gradient propagation through deeper stacks of layers.
 
 \subsection{Architectural Design Choices and Technical Rationale}
 
-Several design decisions were made to ensure training stability, fair comparison, 
-and robustness, particularly given the relatively small size and homogeneity of 
-the training dataset.
+While the previous subsection described the structural composition of each architecture, 
+we now discuss the underlying design rationale and regularization choices that ensure 
+training stability and fair comparison.
 
-First, depthwise separable convolutions are employed in Models A and C. In Model A, 
-Keras \texttt{SeparableConv2D} layers are used to reduce parameter count and computational cost 
-while preserving spatial modeling capacity. In Model C, separable convolutions are 
-implemented explicitly via depthwise and pointwise operations and are combined with 
-conditional residual connections. These residual shortcuts are applied only when spatial 
-resolution and channel dimensionality match, improving gradient flow without introducing 
-projection parameters.
+First, depthwise separable convolutions, already introduced in Models A and C, are 
+primarily motivated by robustness under limited data conditions.. In Model C, 
+separable convolutions are implemented explicitly via depthwise and pointwise operations 
+and are combined with conditional residual connections. These residual shortcuts are 
+applied only when spatial resolution and channel dimensionality match, improving gradient 
+flow without introducing projection parameters.
 
-Second, Layer Normalization (LN) is used instead of Batch Normalization in Model C. 
+Second, Layer Normalization (LN) is employed instead of Batch Normalization in Model C. 
 Since training is performed with relatively small batch sizes and with data augmentation 
 enabled, LN provides more stable normalization statistics that are independent of batch 
 composition. This choice improves convergence consistency and reduces sensitivity to 
 batch-size variations.
 
-Third, spatial downsampling strategies differ across architectures. Models A and B rely on 
-MaxPooling layers for progressive spatial reduction, whereas Model C performs downsampling 
-through strided convolutions (both in the initial stem and in depthwise blocks). This design 
-allows Model C to learn feature extraction and resolution reduction jointly, preserving richer 
-intermediate representations.
+Beyond their structural description, the downsampling mechanisms differ systematically 
+across architectures. Models A and B rely on MaxPooling layers for progressive spatial 
+reduction, whereas Model C performs downsampling through strided convolutions (both in 
+the initial stem and in depthwise blocks). This design allows Model C to learn feature 
+extraction and resolution reduction jointly, preserving richer intermediate representations.
 
-At the classification stage, Models A and C adopt Global Average Pooling, which enforces 
-translation invariance and reduces overfitting by limiting the number of trainable parameters 
-in the classifier. In contrast, Model B uses flattening, resulting in a higher-capacity fully 
-connected head. Dropout regularization is applied in Models A and C before the final classifier, 
-whereas Model B relies solely on architectural simplicity for regularization.
+Consistent with their parameter-efficient design, Models A and C employ Global Average Pooling 
+at the classification stage. In contrast, Model B uses flattening, resulting in a 
+higher-capacity fully connected head.
 
 Label smoothing is applied uniformly across all models through the categorical cross-entropy 
 loss, preventing overconfident predictions and improving robustness under domain shift. In 
