@@ -687,11 +687,11 @@ offer a global complement to the analysis presented below.
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.32\linewidth]{model_A_final/val_confusion_matrix.png}
+\includegraphics[width=0.32\linewidth]{model_a_final/val_confusion_matrix.png}
 \hfill
-\includegraphics[width=0.32\linewidth]{model_B_final/val_confusion_matrix.png}
+\includegraphics[width=0.32\linewidth]{model_b_final/val_confusion_matrix.png}
 \hfill
-\includegraphics[width=0.32\linewidth]{model_C_final/val_confusion_matrix.png}
+\includegraphics[width=0.32\linewidth]{model_c_final/val_confusion_matrix.png}
 \caption{Validation confusion matrices for the three final architectures
 (models A--C).}
 \label{fig:confusion_matrices}
@@ -711,51 +711,55 @@ shown in the Appendix, Figures~\ref{fig:app_misclf_A}, ~\ref{fig:app_misclf_B} a
 confidence.
 
 The qualitative patterns observed differ substantially across
-architectures. For Model A, misclassifications are relatively frequent and exhibit a coarse
-but systematic structure, consistently with the uneven class-wise recall
-reported in Section 3.1. In practical terms, the “missed detections” 
-highlighted by the metrics manifest here as a systematic tendency to 
-collapse paper and scissors into the rock class: among the most confident 
-errors, many true paper and scissors instances are predicted as rock, 
-often with high confidence, suggesting reliance on incomplete or misleading 
-cues (e.g., coarse hand silhouette and background contrast) rather than 
-robust class-defining features. Conversely, true rock appears only rarely 
-in this subset, and when it is misclassified it tends to be predicted as 
-scissors, indicating an asymmetric error profile where paper and scissors 
-are the more challenging classes for this low-capacity representation. 
-Overall, these high-confidence mistakes align with the quantitative results 
-and training dynamics for Model A, providing further evidence of underfitting.
+architectures.
 
-For model B, misclassified examples become markedly fewer and more
-structured. Errors are primarily associated with visually ambiguous
-instances, such as partial hand occlusions, non-standard finger
-extensions, or poses captured at atypical orientations. Importantly,
-these misclassifications tend to occur at lower confidence levels,
-suggesting that the model exhibits increased uncertainty when confronted
-with borderline cases rather than systematically misinterpreting them.
-This pattern reflects a more refined internal representation of gesture
-classes and aligns with the balanced precision--recall improvements
-observed in the quantitative evaluation.
+For Model A, misclassifications are frequent and strongly structured,
+in line with the confusion matrix. The dominant failure mode consists of
+true scissors being predicted as rock, which is reflected in the
+large off-diagonal counts in the corresponding confusion matrix cell.
+Several of the most confident errors in the grid confirm this tendency,
+with true scissors images assigned to the rock class with confidence
+values in the range 0.6–0.8. In addition, some true rock instances are
+misclassified as paper, indicating unstable decision boundaries across
+multiple class pairs. These patterns suggest that the model relies
+primarily on coarse global shape cues rather than on fine-grained
+finger configurations. The resulting asymmetric error profile, together
+with relatively low confidence values (mean 0.44), provides qualitative
+evidence of limited representational capacity consistent with the
+underfitting diagnosis reported earlier.
 
-Misclassifications for model C are rare and highly localized. When
-present, they almost exclusively involve intrinsically ambiguous images
-in which class boundaries are visually blurred, for example due to
-motion blur, extreme perspective, or transitional hand poses between
-gestures. Even in these cases, predicted confidence values are generally
-lower than those observed for incorrect predictions in simpler
-architectures, indicating that the model is aware of its uncertainty.
-This behaviour suggests that residual errors are driven by limitations
-in the visual signal itself rather than by deficiencies in the learned
-representation
+For Model B, misclassifications become substantially fewer and more
+localized. The confusion matrix shows only a small number of errors per
+class, with no dominant confusion pattern. The grid of most confident
+errors reveals that mistakes typically arise in visually ambiguous
+instances, such as transitional hand poses or subtle finger extensions.
+Although a few errors appear with relatively high confidence (e.g.,
+confident confusion between paper and rock), these cases are rare and
+do not form a systematic pattern. Compared to Model A, the internal
+representation appears more stable and class-separable, as reflected in
+both the sharp reduction in off-diagonal confusion counts and the
+dramatically increased overall accuracy.
+
+For Model C, misclassifications are extremely rare and highly
+localized. The confusion matrix is nearly diagonal, with only isolated
+off-diagonal entries. The few errors observed in the grid correspond to
+borderline or visually ambiguous cases, such as transitional poses or
+minor deviations from canonical gesture shapes. Even when confidence
+values are high, these errors do not reveal a consistent structural bias
+toward a specific incorrect class. Rather, they appear to stem from
+intrinsic visual ambiguity in individual samples. This qualitative
+pattern aligns with the near-saturated performance metrics and supports
+the conclusion that residual errors are driven primarily by signal-level
+ambiguity rather than representational limitations.
 
 In light of the above, the qualitative analysis of misclassified
 examples reinforces the conclusions drawn from performance metrics and
 training dynamics. As model capacity increases, errors transition from
-frequent and unstructured (model A), to rare and ambiguity-driven
-(models B and C). This progression indicates that improvements in
+frequent and structurally biased (Model A), to sparse and ambiguity-driven
+(Models B and C). This progression indicates that improvements in
 classification performance are accompanied by a qualitative shift in the
-nature of errors, from representational failures to irreducible visual
-ambiguity.
+nature of errors, from representational insufficiency to near-irreducible
+visual ambiguity.
 
 \subsection{Overfitting and Underfitting Assessment}
 
@@ -766,31 +770,42 @@ classification errors. This combined perspective allows potential
 optimization artefacts to be distinguished from genuine limitations in
 model capacity.
 
-For the baseline architecture, evidence of underfitting is apparent.
+For the baseline architecture (Model A), clear evidence of underfitting emerges.
 Training accuracy saturates at relatively low levels and does not
-continue to improve with additional epochs, while training and
-validation loss curves remain closely aligned. This pattern indicates
-that the model is unable to sufficiently reduce error even on the
-training data, ruling out overfitting and pointing instead to inadequate
-representational capacity. The qualitative analysis of misclassified
-examples further supports this diagnosis, as errors are frequent and follow 
-a strongly biased, asymmetric pattern, suggesting incomplete feature
+substantially improve with additional epochs, while training and
+validation loss curves remain closely aligned throughout
+optimization. This behaviour indicates that the model fails to reduce
+error even on the training data, effectively ruling out
+memorization-driven overfitting and instead pointing to insufficient
+representational capacity. The qualitative inspection of misclassified
+examples further supports this diagnosis: errors are frequent and 
+structurally biased (notably the systematic confusion of scissors with
+rock), revealing coarse decision boundaries and incomplete feature
 learning rather than noise sensitivity.
 
 In contrast, no evidence of overfitting is observed for the more
 expressive architectures. For both models B and C, training and
 validation accuracy curves evolve in parallel, and validation loss does
-not exhibit late-stage divergence or instability. The absence of a 
-widening generalization gap indicates that performance improvements 
-are not driven by memorization of the training data, but rather by the 
-learning of representations that generalize reliably within the 
-validation distribution. Model C, in particular, combines high
-predictive performance with stable optimization behaviour. The minimal
-and non-systematic differences between training and validation curves,
-together with the rarity and structure of residual errors, suggest that
-the model operates in a regime of effective capacity rather than
-over-parameterization. Consequently, the selected architecture 
-demonstrates robustness under in-distribution conditions. 
+not exhibit late-stage divergence. The generalization gap remains small
+and stable, indicating that performance improvements are not driven by
+memorization of the training set but by the learning of increasingly
+discriminative representations.
+
+Model B operates in a regime of effective capacity: it substantially
+reduces classification error while maintaining stable convergence and a
+balanced error profile across classes. Model C further increases
+representational power without inducing instability or widening the
+generalization gap. Although its performance approaches saturation on
+the validation set, the absence of divergence between training and
+validation metrics suggests that the model remains well-regularized
+under in-distribution conditions rather than over-parameterized.
+
+Taken together, these findings indicate a progressive transition from
+capacity-limited underfitting (Model A) to effective high-capacity
+learning (Models B and C). Importantly, improvements in accuracy are
+not accompanied by the characteristic signatures of overfitting,
+supporting the conclusion that architectural expressiveness, rather than
+training instability, explains the observed performance differences.
 
 
 \section{Generalization Test}
@@ -989,37 +1004,37 @@ Images are ranked by decreasing prediction confidence. Each panel reports the tr
 
 \newcommand{\misclfimgAB}[1]{%
   \includegraphics[
-    width=0.92\linewidth,
-    height=0.50\textheight,
+    width=\linewidth,
+    height=0.48\textheight,
     keepaspectratio
   ]{#1}
 }
 
 \newcommand{\misclfimgC}[1]{%
   \includegraphics[
-    width=0.85\linewidth,
-    height=0.35\textheight,
+    width=0.9\linewidth,
+    height=0.32\textheight,
     keepaspectratio
   ]{#1}
 }
 
 \begin{figure}[!htbp]
     \centering
-    \misclfimgAB{model_A_final/val_misclassified.png}
+    \misclfimgAB{model_a_final/val_misclassified.png}
     \caption{Most confident misclassified validation samples for \textbf{Model A}.}
     \label{fig:app_misclf_A}
 \end{figure}
 
 \begin{figure}[!htbp]
     \centering
-    \misclfimgAB{model_B_final/val_misclassified.png}
+    \misclfimgAB{model_b_final/val_misclassified.png}
     \caption{Most confident misclassified validation samples for \textbf{Model B}.}
     \label{fig:app_misclf_B}
 \end{figure}
 
 \begin{figure}[!htbp]
     \centering
-    \misclfimgC{model_C_final/val_misclassified.png}
+    \misclfimgC{model_c_final/val_misclassified.png}
     \caption{Most confident misclassified validation samples for \textbf{Model C}.}
     \label{fig:app_misclf_C}
 \end{figure}
