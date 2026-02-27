@@ -156,6 +156,7 @@ def metrics_from_probs(y_true, probs, class_names):
         labels=labels,
         target_names=class_names,
         zero_division=0,
+        digits=4,
     )
     
     cm = confusion_matrix(y_true, y_pred, labels=labels)
