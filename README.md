@@ -31,7 +31,6 @@ rockpaperscissor_ml_project/
 ├── project_report/                     # project report in LaTeX
 ├── evaluate_myhands.py                 # Evaluate on custom “my hands” images
 ├── external_eval.py                    # Evaluate on external test "rps-cv-images" images
-├── inspect_model.py                    # (Utility) Model inspection / summaries / parameter counts
 └── requirements.txt                    
 
 ```
@@ -238,23 +237,6 @@ reports/
 Purpose
 * Evaluate generalization on custom, real-world images
 * Use labeled folder structure as ground truth
-
-### 5️⃣ Model Inspection 
-```bash
-python inspect_model.py models/model_x_best.keras 
-```
-produces:
-```
-reports/
-└── model_x_final/   (or model_c/)
-    ├── inspect_confusion_matrix_best.png
-    └── classification_report_best.txt
-```
-
-Purpose
-* Inspect a saved model without retraining
-* Print model summary and parameter count
-* Recompute validation performance
 
 ---
 
