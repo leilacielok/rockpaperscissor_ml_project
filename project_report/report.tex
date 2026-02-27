@@ -229,11 +229,11 @@ Model C & 45{,}523  & 178~KB \\
 \end{tabular}
 \end{table}
 
-
 \paragraph{Model A.}
-Model A is a deliberately lightweight architecture intended as a minimal 
-baseline. It relies on a small number of depthwise-separable convolutional 
-layers followed by max-pooling operations:
+Model A is a deliberately lightweight baseline architecture based on 
+depthwise-separable convolutions. It consists of three separable convolutional 
+layers with increasing channel depth, where the first two are followed by 
+max-pooling for spatial downsampling:
 
 \[
 \mathbf{x}_{l+1}
@@ -243,102 +243,78 @@ layers followed by max-pooling operations:
 \mathbf{x}_{l+2} = \texttt{MaxPool}(\mathbf{x}_{l+1})
 \]
 
-After three such stages, global average pooling (GAP) is applied:
+After the final convolution, global average pooling (GAP) is applied:
 
 \[
 \mathbf{z} = \texttt{GAP}(\mathbf{x}_L),
 \]
 
-followed by a small dense head with dropout:
+followed by dropout and a small dense classifier:
 
 \[
-\hat{\mathbf{y}} = 
-\texttt{Softmax}(W_2 \, \texttt{ReLU}(W_1 \mathbf{z})).
+\hat{\mathbf{y}} =
+\texttt{Softmax}\!\big(W_2 \,\texttt{ReLU}(W_1\,\texttt{Dropout}(\mathbf{z}))\big).
 \]
 
-The use of separable convolutions significantly reduces the number of trainable 
-parameters and computational cost (2,814 trainable parameters; see 
-Table~\ref{tab:model_capacity}), enforcing a strong inductive bias toward 
-learning coarse spatial patterns. The adoption of global average pooling further 
-limits the model's capacity to memorize spatially localized features. As a result, model A 
-primarily captures global shape cues rather than fine-grained gesture details.
+The use of separable convolutions significantly reduces model capacity 
+(2,814 trainable parameters; see Table~\ref{tab:model_capacity}), enforcing 
+a strong inductive bias toward coarse spatial structure. Combined with 
+global average pooling, this limits memorization of localized patterns, 
+so the model primarily captures global shape cues rather than fine-grained details.
 
 \paragraph{Model B.}
-Model B represents a modest increase in expressiveness and corresponds to 
-a conventional shallow CNN. It employs standard convolutional layers 
-interleaved with max-pooling
+Model B is a conventional shallow CNN with two convolution--pooling blocks
+followed by a fully connected classifier. Using standard (valid) convolutions:
 
 \[
-\mathbf{x}_{l+1}
-=
-\sigma\!\left(\texttt{Conv2D}(\mathbf{x}_l)\right),
+\mathbf{x}_{l+1}=\sigma(\texttt{Conv2D}(\mathbf{x}_l)),
 \qquad
-\mathbf{x}_{l+2} = \texttt{MaxPool}(\mathbf{x}_{l+1}).
+\mathbf{x}_{l+2}=\texttt{MaxPool}(\mathbf{x}_{l+1}).
 \]
 
-After two convolution–pooling stages, spatial feature maps are flattened:
-
+After the second block, feature maps are flattened,
 \[
-\mathbf{z} = \texttt{Flatten}(\mathbf{x}_L),
+\mathbf{z}=\texttt{Flatten}(\mathbf{x}_L),
 \]
-
-and passed through a dense classifier:
-
+and fed to a small dense head:
 \[
-\hat{\mathbf{y}} =
-\texttt{Softmax}(W_2 \, \texttt{ReLU}(W_1 \mathbf{z})).
+\hat{\mathbf{y}}=\texttt{Softmax}(W_2\,\texttt{ReLU}(W_1\mathbf{z})).
 \]
 
-Compared to model A, this design substantially increases 
-parameter count (249,331 trainable parameters) and spatial flexibility, but 
-reduces the implicit spatial regularization induced by global pooling. 
-This makes model B more expressive but also more prone to 
-sensitivity under distributional shifts, as later evidenced in the 
-evaluation on the custom dataset.
+Compared to model A, this design increases capacity (249{,}331 parameters) by
+preserving spatial degrees of freedom via flattening, at the cost of weaker
+implicit spatial regularization.
 
 \paragraph{Model C.}
-Model C is a deeper architecture optimized for stable training and robust 
-feature extraction under constrained data regimes. With 45,523 trainable 
-parameters, it achieves a favorable capacity–efficiency trade-off. 
-The architecture starts with a strided convolutional stem:
-
+Model C is a deeper architecture designed for stable training under limited data.
+With 45{,}523 trainable parameters, it targets a favorable capacity--efficiency trade-off.
+The network begins with a strided convolutional stem,
 \[
-\mathbf{x}_1 = \texttt{Conv}_{s=2}(\mathbf{x}_0),
+\mathbf{x}_1=\texttt{Conv}_{s=2}(\mathbf{x}_0),
 \]
-
-followed by repeated blocks composed of depthwise separable convolutions
-with layer normalization. Let $F(\mathbf{x};\theta)$ denote the composite 
-transformation implemented by a depthwise separable block including 
-convolution, normalization, and nonlinearity.
-Residual connections are conditionally applied as:
-
+followed by staged depthwise-separable blocks with layer normalization and ReLU.
+Let $F(\mathbf{x};\theta)$ denote one such block (depthwise $3{\times}3$ with stride $s$,
+pointwise $1{\times}1$, LN, ReLU). Residual connections are applied only when shapes match:
 \[
-\mathbf{y} =
+\mathbf{y}=
 \begin{cases}
-F(\mathbf{x}; \theta) + \mathbf{x}, & \text{if } s = 1 \text{ and } C_{\text{in}} = C_{\text{out}}, \\
-F(\mathbf{x}; \theta), & \text{otherwise}.
+\mathbf{x}+F(\mathbf{x};\theta), & s=1 \ \wedge\ C_{\text{in}}=C_{\text{out}},\\
+F(\mathbf{x};\theta), & \text{otherwise}.
 \end{cases}
 \]
-
-Unlike classical ResNet architectures, no projection shortcut is used when 
-dimensions change, keeping the block lightweight while preserving identity-based 
-gradient flow whenever tensor shapes match.
-
-Spatial resolution is reduced progressively through strided convolutions 
-rather than pooling, leading to feature maps at resolutions 
-$48\times48$, $24\times24$, and $12\times12$. After staged processing, 
-global average pooling aggregates spatial information:
-
+No projection shortcut is used when dimensions change, keeping blocks lightweight.
+Spatial resolution is reduced via stride-2 depthwise blocks, yielding feature maps at
+$48{\times}48$, $24{\times}24$, and $12{\times}12$, followed by a $1{\times}1$ bottleneck convolution.
+Global average pooling produces
 \[
-\mathbf{z} = \texttt{GAP}(\mathbf{x}_L),
+\mathbf{z}=\texttt{GAP}(\mathbf{x}_L),
 \]
-
-followed by a compact dense head with dropout:
-
+and the classifier head is
 \[
-\hat{\mathbf{y}} =
-\texttt{Softmax}(W_2 \, \texttt{Dropout}(\texttt{ReLU}(W_1 \mathbf{z}))).
+\hat{\mathbf{y}}=
+\texttt{Softmax}\!\big(W_2\,\texttt{Dropout}(\texttt{ReLU}(W_1\mathbf{z}))\big),
 \]
+with an optional bias initialization using log-prior class probabilities.
 
 
 \subsection{Architectural Design Choices and Technical Rationale}
@@ -409,18 +385,16 @@ are summarized in Table~\ref{tab:tuning_best_configs}.
 
 \begin{table}[h]
 \centering
-\caption{Best tuning configurations per model, reporting the best run with and without augmentation.}
+\caption{Best tuning configurations per model, reporting the best run}
 \label{tab:tuning_best_configs}
 \begin{tabular}{lccc c}
 \hline
 Model & Learning rate & Batch size & Augment & Val. accuracy \\
 \hline
-A & $1 \times 10^{-3}$ & 32 & No  & 0.6461 \\
 A & $1 \times 10^{-3}$ & 32 & Yes & 0.6644 \\
 B & $3 \times 10^{-4}$ & 32 & No  & 0.9658 \\
 B & $1 \times 10^{-3}$ & 32 & Yes & 0.9658 \\
 C & $3 \times 10^{-4}$ & 16 & No  & 0.9954 \\
-C & $5 \times 10^{-4}$ & 32 & Yes & 0.9680 \\
 \hline
 \end{tabular}
 \end{table}
@@ -436,45 +410,17 @@ generalization tests on the two additional datasets.
 
 \section{Evaluation and Analysis}
 
-Building on the architectural comparison introduced in Section 2, this
-section evaluates how increasing model complexity translates into
-empirical performance differences.
-
-This section presents the results obtained from the training and
-evaluation pipeline, focusing on the outputs that are most informative
-for assessing model performance, stability, and generalization. Although
-the experimental framework produces a broad set of diagnostic artifacts
-during development, only a selected subset is reported here in order to
-avoid redundancy and to emphasize interpretability.
-
-In particular, the results include:
-
-
-\begin{enumerate}
-\def\labelenumi{\roman{enumi}.}
-\item
-  a quantitative comparison across architectures based on validation
-  performance, including accuracy, precision, recall, and F1-score, used
-  to support model selection (Section 4.1);
-\item
-  an analysis of training dynamics through loss and accuracy curves on
-  both training and validation sets, providing insight into convergence
-  behaviour and learning stability (Section 4.2);
-\item
-  a qualitative analysis of misclassified validation examples, aimed at
-  identifying systematic error patterns and model-specific failure modes
-  (Section 4.3);
-\item
-  an integrated assessment of overfitting and underfitting, based on
-  performance metrics, learning curves, and error structure (Section
-  4.4).
-\end{enumerate}
-
-
-Additional intermediate diagnostics generated during model development 
-were used exclusively for debugging and validation purposes and are not 
-included here, as they do not provide additional insight beyond the 
-selected evaluation outputs presented above.
+Building on the architectural comparison in Section~2, this section
+examines how increasing model complexity translates into empirical
+performance differences. We report a selected subset of evaluation
+outputs that are most informative for assessing predictive performance,
+training stability, and generalization. In particular, we compare
+architectures using validation metrics (accuracy, precision, recall,
+F1-score), analyze training dynamics through loss and accuracy curves,
+inspect misclassified examples to identify systematic error patterns,
+and integrate these elements to diagnose overfitting or underfitting.
+Additional intermediate diagnostics used during development are omitted
+for brevity, as they do not provide further interpretative value.
 
 \subsection{Performance Metrics}
 
@@ -567,23 +513,10 @@ Models B and C operate in a high-confidence regime with reduced
 uncertainty. Importantly, class-averaged predicted probabilities remain
 approximately balanced across classes, suggesting that improvements are
 not driven by degenerate class priors but by genuinely more separable
-representations. For completeness, validation-set confidence diagnostics
-are summarized in Table~\ref{tab:confidence_diagnostics}.
+representations. For completeness, validation-set confidence diagnostics 
+(mean and standard deviation of the maximum softmax probability) 
+are reported in Appendix~\ref{app:confidence}.
 
-\begin{table}[h]
-\centering
-\caption{Prediction confidence diagnostics on the validation set: mean and standard deviation of the maximum softmax probability across samples.}
-\label{tab:confidence_diagnostics}
-\begin{tabular}{lc}
-\hline
-Model & Val max-prob ($\mu \pm \sigma$) \\
-\hline
-Model A (best) & $0.44 \pm 0.09$ \\
-Model B (best) & $0.90 \pm 0.14$ \\
-Model C (best) & $0.95 \pm 0.06$ \\
-\hline
-\end{tabular}
-\end{table}
 
 \subsection{Training Dynamics}
 
@@ -1007,6 +940,25 @@ importance of robustness evaluation in practical computer vision systems.
 \section*{Appendix}
 \addcontentsline{toc}{section}{Appendix}
 
+
+\section{Validation Confidence Diagnostics}
+\label{app:confidence}
+
+\begin{table}[h]
+\centering
+\caption{Prediction confidence diagnostics on the validation set: 
+mean and standard deviation of the maximum softmax probability across samples.}
+\begin{tabular}{lc}
+\hline
+Model & Val max-prob ($\mu \pm \sigma$) \\
+\hline
+Model A (best) & $0.44 \pm 0.09$ \\
+Model B (best) & $0.90 \pm 0.14$ \\
+Model C (best) & $0.95 \pm 0.06$ \\
+\hline
+\end{tabular}
+\end{table}
+
 \section{Additional Qualitative Diagnostics}
 \subsection{Misclassified examples}
 
@@ -1041,6 +993,8 @@ Images are ranked by decreasing prediction confidence. Each panel reports the tr
     \caption{Most confident misclassified validation samples for \textbf{Model B}.}
     \label{fig:app_misclf_B}
 \end{figure}
+
+\vspace{-0.5em}
 
 \begin{figure}[!htbp]
     \centering
@@ -1080,7 +1034,7 @@ Weighted avg  & 0.9982 & 0.9982 & 0.9982 & 2188 \\
 
 \begin{figure}[!htbp]
     \centering
-    \includegraphics[width=0.6\linewidth]{model_C_final/test_confusion_matrix.png}
+    \includegraphics[width=0.4\linewidth]{model_C_final/test_confusion_matrix.png}
     \caption{Confusion matrix for model C on the external in-distribution test set (\emph{rps-cv-images}).}
     \label{fig:app_test_confusion}
 \end{figure}
@@ -1096,11 +1050,10 @@ Weighted avg  & 0.9982 & 0.9982 & 0.9982 & 2188 \\
 \label{fig:app_custom_confusion_combined}
 \end{figure}
 
-\FloatBarrier
 
 \subsection{Predicted class priors}
 
-\begin{table}[!htbp]
+\begin{table}[H]
 \centering
 \caption{Mean predicted class priors (pre-recalibration) for the three architectures on the custom out-of-distribution dataset.}
 \label{tab:app_custom_pred_priors}
