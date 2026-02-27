@@ -201,7 +201,30 @@ The three convolutional neural network architectures evaluated in this
 study were designed to form a controlled complexity hierarchy, 
 in which representational capacity, depth, and regularization mechanisms 
 are progressively increased while keeping the input resolution and 
-training protocol fixed. Formally, each model defines a mapping 
+training protocol fixed. 
+
+To make this incremental increase in representational capacity explicit,
+Table~\ref{tab:model_capacity} reports the number of trainable parameters
+and effective model size for each architecture.
+
+\begin{table}[h]
+\centering
+\caption{Model capacity comparison across architectures.}
+\label{tab:model_capacity}
+\begin{tabular}{lcc}
+\hline
+\textbf{Model} &
+\textbf{Trainable parameters} &
+\textbf{Model size (trainable)} \\
+\hline
+Model A & 2{,}814   & 11~KB  \\
+Model B & 249{,}331 & 974~KB \\
+Model C & 45{,}523  & 178~KB \\
+\hline
+\end{tabular}
+\end{table}
+
+Formally, each model defines a mapping 
 $f(\mathbf{x}_0; \Theta)$ from an input image 
 $\mathbf{x}_0 \in \mathbb{R}^{H \times W \times 3}$ 
 to class probabilities via a softmax layer.
@@ -233,7 +256,8 @@ followed by a small dense head with dropout:
 \]
 
 The use of separable convolutions significantly reduces the number of trainable 
-parameters and computational cost, enforcing a strong inductive bias toward 
+parameters and computational cost (2,814 trainable parameters; see 
+Table~\ref{tab:model_capacity}), enforcing a strong inductive bias toward 
 learning coarse spatial patterns. The adoption of global average pooling further 
 limits the model's capacity to memorize spatially localized features. As a result, model A 
 primarily captures global shape cues rather than fine-grained gesture details.
@@ -241,14 +265,14 @@ primarily captures global shape cues rather than fine-grained gesture details.
 \paragraph{Model B.}
 Model B represents a modest increase in expressiveness and corresponds to 
 a conventional shallow CNN. It employs standard convolutional layers 
-interleaved with max-pooling 
+interleaved with max-pooling
 
 \[
 \mathbf{x}_{l+1}
 =
 \sigma\!\left(\texttt{Conv2D}(\mathbf{x}_l)\right),
 \qquad
-\mathbf{x}_{l+2} = \texttt{MaxPool}(\mathbf{x}_{l+1})
+\mathbf{x}_{l+2} = \texttt{MaxPool}(\mathbf{x}_{l+1}).
 \]
 
 After two convolution–pooling stages, spatial feature maps are flattened:
@@ -265,16 +289,17 @@ and passed through a dense classifier:
 \]
 
 Compared to model A, this design substantially increases 
-parameter count and spatial flexibility, but reduces the implicit spatial 
-regularization induced by global pooling. 
+parameter count (249,331 parameters) and spatial flexibility, but 
+reduces the implicit spatial regularization induced by global pooling. 
 This makes model B more expressive but also more prone to 
 sensitivity under distributional shifts, as later evidenced in the 
 evaluation on the custom dataset.
 
 \paragraph{Model C.}
 Model C is a deeper architecture optimized for stable training and robust 
-feature extraction under constrained data regimes. It starts with a 
-strided convolutional stem:
+feature extraction under constrained data regimes, by achieving a 
+favorable capacity–efficiency trade-off with 45,523 trainable parameters. 
+The architecture starts with a strided convolutional stem:
 
 \[
 \mathbf{x}_1 = \texttt{Conv}_{s=2}(\mathbf{x}_0),
@@ -317,40 +342,6 @@ followed by a compact dense head with dropout:
 Layer normalization is systematically employed to stabilize optimization 
 under small-batch training conditions, while residual connections facilitate 
 gradient propagation through deeper stacks of layers.
-
-\paragraph{Model capacity and parameterization.}
-
-To make the notion of ``incremental complexity'' explicit, the architectures
-are compared in terms of trainable parameter count and model size, as reported in
-Table~\ref{tab:model_capacity}.
-
-\begin{table}[h]
-\centering
-\caption{Model capacity comparison across architectures.}
-\label{tab:model_capacity}
-\begin{tabular}{lcc}
-\hline
-\textbf{Model} &
-\textbf{Trainable parameters} &
-\textbf{Model size (trainable)} \\
-\hline
-Model A & 2{,}814   & 11~KB  \\
-Model B & 249{,}331 & 974~KB \\
-Model C & 45{,}523  & 178~KB \\
-\hline
-\end{tabular}
-\end{table}
-
-Model~A is a lightweight baseline with 2{,}814 trainable parameters, reflecting 
-the strong inductive bias induced by separable convolutions and a compact 
-classification head.
-Model~B substantially increases capacity (249{,}331 trainable parameters), 
-primarily due to the \texttt{Flatten}+\texttt{Dense} stage operating on high-dimensional 
-feature maps.
-Model~C achieves a favorable capacity--efficiency trade-off with 45{,}523 trainable 
-parameters by relying on depthwise-separable convolutions, residual blocks, and global 
-average pooling, which together reduce parameter growth while enabling deeper 
-hierarchical feature extraction.
 
 \subsection{Architectural Design Choices and Technical Rationale}
 
