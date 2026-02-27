@@ -160,8 +160,18 @@ def run_final_training(
 
     model_dir = Path(reports_dir) / f"{name}_final"
     model_dir.mkdir(parents=True, exist_ok=True)
-
+        
     res_val = evaluation.evaluate_on(val_ds, model, config.CLASSES)
+    evaluation.save_misclassified_from_probs(
+        file_paths=file_paths_val,
+        probs=res_val["probs"],
+        y_true=res_val["y_true"],
+        class_names=config.CLASSES,
+        top_n=12,
+        outpath=str(model_dir / "val_misclassified.png"),
+        pick="confident",
+    )
+    
     print(f"Final VAL accuracy: {res_val['acc']:.4f}")
 
     evaluation.save_report(
@@ -174,19 +184,6 @@ def run_final_training(
         title=f"Confusion Matrix (val) – {name} (final)",
     )
     evaluation.plot_history(history, outdir=str(model_dir))
-
-    try:
-        evaluation.show_misclassified(
-            val_ds,
-            model,
-            file_paths_val,
-            config.CLASSES,
-            top_n=12,
-            outpath=str(model_dir / "val_misclassified.png"),
-            pick="confident",
-        )
-    except Exception as e:
-        print("Impossible to generate misclassified grid:", e)
 
     return model, history, runtime, res_val
 

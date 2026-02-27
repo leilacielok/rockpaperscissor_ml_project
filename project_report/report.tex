@@ -705,20 +705,16 @@ confidence.
 The qualitative patterns observed differ substantially across
 architectures.
 
-For Model A, misclassifications are frequent and strongly structured,
-in line with the confusion matrix. The dominant failure mode consists of
-true scissors being predicted as rock, which is reflected in the
-large off-diagonal counts in the corresponding confusion matrix cell.
-Several of the most confident errors in the grid confirm this tendency,
-with true scissors images assigned to the rock class with confidence
-values in the range 0.6–0.8. In addition, some true rock instances are
-misclassified as paper, indicating unstable decision boundaries across
-multiple class pairs. These patterns suggest that the model relies
-primarily on coarse global shape cues rather than on fine-grained
-finger configurations. The resulting asymmetric error profile, together
-with relatively low confidence values (mean 0.44), provides qualitative
-evidence of limited representational capacity consistent with the
-underfitting diagnosis reported earlier.
+For Model A, misclassifications are frequent but not uniformly distributed across class pairs. 
+The confusion matrix indicates that the dominant error mode is confusing scissors with rock 
+(40 instances), with additional leakage of paper into rock and rock into scissors. 
+Interestingly, the grid of most confident misclassifications highlights a different aspect: 
+among the highest-confidence errors, several samples are predicted as paper with moderate 
+confidence (around 0.6--0.8). This does not imply that paper is the most frequent erroneous 
+prediction, but rather that a subset of paper-type false positives is associated with higher 
+confidence than the more common scissors-to-rock confusions. Overall, this pattern supports 
+the underfitting diagnosis: the model relies on coarse global cues and fails to establish 
+consistently sharp decision boundaries between visually similar hand configurations.
 
 For Model B, misclassifications become substantially fewer and more
 localized. The confusion matrix shows only a small number of errors per

@@ -51,6 +51,8 @@ def evaluate_on(ds, model, class_names, debug=False):
     m["keras_acc"] = float(acc)  
     m["val_conf_mean"] = conf_mean
     m["val_conf_std"] = conf_std
+    m["y_true"] = y_true
+    m["probs"] = probs_all
 
     return m
 
