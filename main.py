@@ -3,7 +3,6 @@ import os
 
 os.environ["TF_ENABLE_ONEDNN_OPTS"] = "0"
 import random
-from itertools import product
 from pathlib import Path
 
 import numpy as np
@@ -95,8 +94,9 @@ def main():
     train_ds, val_ds, file_paths_val = data_utils.load_train_val_stratified(
         validation_split=0.2, augment=True
     )
-    evaluation.print_class_histogram(val_ds)
-
+    counts = evaluation.print_class_histogram(val_ds)
+    print("Validation class histogram:", counts)
+    
     # Priors
     priors = data_utils.compute_class_priors(train_ds, len(config.CLASSES))
     log_priors = np.log(priors + 1e-8)
@@ -128,9 +128,7 @@ def main():
     # External test on the best model
     try:
         best_name = max(results, key=lambda t: t[1])[0]
-        from keras.models import load_model
-
-        best_model = load_model(f"models/{best_name}.keras")
+        best_model = tf.keras.models.load_model(f"models/{best_name}_best.keras")
         test_ds = data_utils.load_external_test()
         res_test = evaluation.evaluate_on(test_ds, best_model, config.CLASSES)
 
