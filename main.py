@@ -25,6 +25,45 @@ os.environ["PYTHONHASHSEED"] = str(config.SEED)
 Path("models").mkdir(exist_ok=True)
 Path("reports").mkdir(exist_ok=True)
 
+def write_best_summary(out_csv="reports/summary_best.csv"):
+    import csv
+    from pathlib import Path
+    import numpy as np
+    import tensorflow as tf
+
+    Path("reports").mkdir(exist_ok=True)
+
+    # validation set deterministico, senza augmentation
+    _, val_ds, _ = data_utils.load_train_val_stratified(
+        validation_split=0.2,
+        augment=False,
+    )
+
+    rows = []
+    for name in ["model_a", "model_b", "model_c"]:
+        ckpt = f"models/{name}_best.keras"
+        model = tf.keras.models.load_model(ckpt)
+
+        res = evaluation.evaluate_on(val_ds, model, config.CLASSES)
+        rep = res["report_dict"]
+        macro = rep["macro avg"]
+
+        rows.append([
+            name,
+            float(rep["accuracy"]),
+            float(macro["precision"]),
+            float(macro["recall"]),
+            float(macro["f1-score"]),
+            int(model.count_params()),
+        ])
+
+    with open(out_csv, "w", newline="", encoding="utf-8") as f:
+        w = csv.writer(f)
+        w.writerow(["model", "val_accuracy", "precision_macro", "recall_macro", "f1_macro", "params"])
+        w.writerows(rows)
+
+    print(f"Wrote {out_csv}")
+
 
 def train_and_report(model_name, model, train_ds, val_ds, file_paths_val):
     model.summary()
@@ -53,8 +92,15 @@ def train_and_report(model_name, model, train_ds, val_ds, file_paths_val):
 
     # Validation metrics
     res_val = evaluation.evaluate_on(val_ds, model, config.CLASSES)
-    print(f"Validation accuracy: {res_val['acc']:.4f}")
+    rep = res_val["report_dict"]
+    macro_prec = float(rep["macro avg"]["precision"])
+    macro_rec  = float(rep["macro avg"]["recall"])
+    macro_f1   = float(rep["macro avg"]["f1-score"])
+    acc_rep    = float(rep["accuracy"])  
 
+    print(
+        f"VAL macro | acc={acc_rep:.4f} P={macro_prec:.4f} R={macro_rec:.4f} F1={macro_f1:.4f}"
+    )
     # Reports & plots
     evaluation.save_report(
         res_val["report_txt"], str(model_dir / "val_classification_report.txt")
@@ -86,6 +132,11 @@ def train_and_report(model_name, model, train_ds, val_ds, file_paths_val):
 
 
 def main():
+    
+    if getattr(config, "MAKE_BEST_SUMMARY", False):
+        write_best_summary()
+        return
+
     # tuning
     if getattr(config, "TUNING", False):
         tuning.main()
@@ -108,7 +159,7 @@ def main():
         ("model_c", lambda: architectures.model_c(log_priors)),
     ]
 
-    # Four architectures
+    # three architectures
     results = []
     for name, builder in models_to_try:
         tf.keras.backend.clear_session()

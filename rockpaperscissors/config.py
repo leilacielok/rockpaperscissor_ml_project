@@ -4,6 +4,8 @@ BATCH_SIZE = 64
 SEED = 42
 CLASSES = ["rock", "paper", "scissors"]
 
+MAKE_BEST_SUMMARY = True
+
 EVAL_RESIZE_MODE = "pad"  # letterboxing
 EVAL_RECALIB = "uniform"
 RECALIB_ALPHA = 1.0

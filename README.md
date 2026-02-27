@@ -165,7 +165,7 @@ Running:
 ```bash
 python main.py
 ```
-(with  ```TUNING=False``` in  ```config.py ```) produces:
+(with  ```TUNING=False```, ```MAKE_BEST_SUMMARY = True``` in  ```config.py ```) produces:
 ```
 reports/
 ├── model_x/
@@ -175,7 +175,8 @@ reports/
 │   ├── val_confusion_matrix.png
 │   └── val_misclassified.png
 │
-├── summary.csv
+├── summary.csv # (models trained in standard mode)
+└── summary_best.csv # (performance of tuned configurations)
 ```
 
 Purpose

@@ -16,37 +16,37 @@ def evaluate_on(ds, model, class_names, debug=False):
     Evaluate `model` on dataset `ds` (one-hot labels expected) and return metrics.
 
     Returns dict with:
-      - loss, acc (from model.evaluate)
-      - report_txt (sklearn classification_report)
-      - cm (confusion matrix)
+      - acc (manual, from metrics_from_probs)
+      - report_dict (raw sklearn metrics, includes 'accuracy')
+      - report_txt (formatted sklearn report)
+      - cm, per_class, counts...
+      - loss, keras_acc (from model.evaluate)
+
     """
-    y_true, y_pred = [], []
-    probs_all = [] if debug else None
+    y_true = []
+    probs_all = []
 
     for x, y in ds:
         probs = model.predict(x, verbose=0)
-        y_pred.append(np.argmax(probs, axis=1))
+        probs_all.append(probs)
         y_true.append(np.argmax(y.numpy(), axis=1))
-        if debug:
-            probs_all.append(probs)
 
     y_true = np.concatenate(y_true)
-    y_pred = np.concatenate(y_pred)
+    probs_all = np.concatenate(probs_all, axis=0)
 
     if debug:
-        probs_all = np.concatenate(probs_all, axis=0)
         pmax = probs_all.max(axis=1)
-        print("val prob max (mean±std):", pmax.mean(), pmax.std())
-        print("val prob mean per classe:", probs_all.mean(axis=0))
+        print("val prob max (mean±std):", float(pmax.mean()), float(pmax.std()))
+        print("val prob mean per class:", probs_all.mean(axis=0))
 
-    labels = list(range(len(class_names)))  # explicit labels to avoid bugs
-    report_txt = classification_report(
-        y_true, y_pred, labels=labels, target_names=class_names, zero_division=0
-    )
-    cm = confusion_matrix(y_true, y_pred, labels=labels)
+    m = metrics_from_probs(y_true, probs_all, class_names)
+
     loss, acc = model.evaluate(ds, verbose=0)
 
-    return {"loss": loss, "acc": acc, "report_txt": report_txt, "cm": cm}
+    m["loss"] = float(loss)
+    m["keras_acc"] = float(acc)  
+
+    return m
 
 
 def plot_history(history, outdir="reports"):
@@ -133,9 +133,23 @@ def metrics_from_probs(y_true, probs, class_names):
 
     labels = list(range(len(class_names)))
 
-    report_txt = classification_report(
-        y_true, y_pred, labels=labels, target_names=class_names, zero_division=0
+    report_dict = classification_report(
+        y_true,
+        y_pred,
+        labels=labels,
+        target_names=class_names,
+        zero_division=0,
+        output_dict=True,
     )
+    
+    report_txt = classification_report(
+        y_true,
+        y_pred,
+        labels=labels,
+        target_names=class_names,
+        zero_division=0,
+    )
+    
     cm = confusion_matrix(y_true, y_pred, labels=labels)
 
     acc = float((y_true == y_pred).mean())
@@ -163,6 +177,7 @@ def metrics_from_probs(y_true, probs, class_names):
         "acc": acc,
         "macro_f1": macro_f1,
         "report_txt": report_txt,
+        "report_dict": report_dict,
         "cm": cm,
         "per_class": per_class,
         "true_counts": true_counts,

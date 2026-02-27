@@ -503,56 +503,58 @@ not driven by class imbalance.
 
 \begin{table}[h]
 \centering
-\caption{Validation performance comparison across architectures. Metrics are macro-averaged over classes.}
+\caption{Validation performance of the best tuned configuration for each architecture. Metrics are macro-averaged over classes (3 decimal precision).}
 \label{tab:validation_performance}
 \begin{tabular}{lcccc}
 \hline
 Model & Accuracy & Precision (macro) & Recall (macro) & F1-score (macro) \\
 \hline
-Model A & 0.81 & 0.83 & 0.81 & 0.82 \\
-Model B & 0.97 & 0.97 & 0.97 & 0.97 \\
-Model C & 0.99 & 0.99 & 0.99 & 0.99 \\
+Model A (best) & 0.651 & 0.651 & 0.650 & 0.645 \\
+Model B (best) & 0.961 & 0.962 & 0.961 & 0.961 \\
+Model C (best) & 0.993 & 0.993 & 0.993 & 0.993 \\
 \hline
 \end{tabular}
 \end{table}
 
-As shown in Table~\ref{tab:validation_performance}, a clear and monotonic improvement emerges across architectures. The
-baseline model (model A) exhibits limited accuracy and macro F1-score,
-indicating that its representational capacity is insufficient to
-reliably discriminate among the three gesture classes. This limitation
-manifests primarily through uneven recall across classes, suggesting
-that the model systematically fails to recognize certain gestures even
-when they are present in the input. In practical terms, this behaviour
-corresponds to a high rate of missed detections for specific classes,
-despite a moderate ability to correctly label some of the predictions it
-does make.
+As shown in Table~\ref{tab:validation_performance}, a clear and substantial 
+improvement emerges across architectures, with a pronounced performance gap 
+between the baseline model and the two more expressive networks.
 
-Model B marks a substantial qualitative shift in performance. Both
-precision and recall increase consistently across all classes, resulting
-in a strong improvement in the macro F1-score and overall accuracy. This
-indicates that the model not only reduces false positives, but also
-significantly mitigates false negatives. The balanced improvement across
-metrics suggests that the architectural enhancements introduced in model
-B enable the extraction of more stable and discriminative features,
-leading to a more symmetric and reliable error profile.
+The baseline architecture (Model A) achieves a validation accuracy of 0.651 
+and a macro F1-score of 0.645, indicating that it fails to reliably separate 
+the three gesture classes even under in-distribution conditions. The close 
+alignment between macro precision (0.651) and recall (0.650) suggests that 
+performance limitations are not driven by a specific bias toward false positives 
+or false negatives, but rather by an overall inability to extract sufficiently 
+discriminative representations. In practical terms, this behaviour corresponds 
+to frequent class confusion and unstable decision boundaries, consistent with 
+limited representational capacity.
 
-The most expressive architecture (model C) further consolidates these
-gains, achieving uniformly high precision and recall for all classes.
-The saturation of the F1-score reflects near-complete class separability
-within the validation distribution, with residual errors becoming rare
-and non-systematic. Importantly, the concurrent improvement in all
-reported metrics indicates that performance gains are not driven by a
-trade-off between precision and recall, but rather by a genuine
-reduction in both types of errors. This behaviour provides strong
-evidence that model C learns robust class-specific representations and
-generalizes effectively within the in-distribution validation setting.
+Model B marks a decisive qualitative shift in performance. Validation accuracy 
+rises sharply to 0.961, with macro precision, recall, and F1-score all exceeding 
+0.96. This substantial gain relative to Model A indicates that the architectural 
+modifications introduced in Model B enable the learning of far more expressive 
+and class-separable features. The near-perfect balance between precision and 
+recall across classes suggests that errors are both rare and symmetrically 
+distributed, pointing to stable and well-calibrated decision regions.
 
-Taken together, these results demonstrate that increasing architectural
-expressiveness translates into progressively better error control,
-moving from partial and class-dependent recognition in model A to stable
-and virtually perfect classification in model C. This progression provides a
-principled justification for selecting model C as the final architecture
-for subsequent generalization analyses.
+The most expressive architecture (Model C) further consolidates these gains, 
+achieving a validation accuracy of 0.993 and macro F1-score of 0.993. The 
+marginal improvement over Model B reflects a transition from strong to 
+near-saturated performance within the validation distribution. At this 
+level, residual misclassifications become sparse and largely non-systematic. 
+Importantly, the concurrent improvement in all reported metrics indicates 
+that performance gains are not the result of a precision–recall trade-off, 
+but rather of a genuine and uniform reduction in classification errors.
+
+Taken together, these results reveal a two-stage progression in model 
+capability. The transition from Model A to Model B produces a dramatic 
+improvement driven by increased representational power, while the 
+transition from Model B to Model C yields a more incremental refinement 
+toward near-complete class separability. This progression provides a 
+principled and empirically grounded justification for selecting Model C 
+as the final architecture for subsequent generalization and robustness 
+analyses.
 
 \paragraph{Prediction confidence on the validation set.}
 In addition to accuracy-based metrics, the distribution of predicted probabilities provides a coarse \emph{proxy} for confidence calibration.
