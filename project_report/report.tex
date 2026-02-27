@@ -348,7 +348,7 @@ we now discuss the underlying design rationale and regularization choices that e
 training stability and fair comparison.
 
 First, depthwise separable convolutions, already introduced in Models A and C, are 
-primarily motivated by robustness under limited data conditions.. In Model C, 
+primarily motivated by robustness under limited data conditions. In Model C, 
 separable convolutions are implemented explicitly via depthwise and pointwise operations 
 and are combined with conditional residual connections. These residual shortcuts are 
 applied only when spatial resolution and channel dimensionality match, improving gradient 
@@ -376,12 +376,19 @@ Model C, the optional initialization of output biases using empirical log-prior 
 probabilities further stabilizes early training dynamics, particularly in the presence of mild 
 class imbalance.
 
-\paragraph{Training optimization and regularization.}
-Across all architectures, optimization is performed with the Adam optimizer. Training is 
-regularized through early stopping monitored on validation accuracy and an adaptive 
-learning-rate schedule (ReduceLROnPlateau), which lowers the learning rate when validation 
-performance stagnates. Together, these mechanisms improve training stability and convergence
-behaviour, while limiting unnecessary computation once progress plateaus.
+Across all architectures, optimization is performed using the Adam optimizer 
+with default $\beta_1$ and $\beta_2$ coefficients. 
+Model~A is trained with a learning rate of $10^{-3}$, 
+Model~B uses the default Adam learning rate, 
+and Model~C adopts a reduced learning rate of $3 \times 10^{-4}$ 
+to improve optimization stability in the deeper architecture.
+
+Training is regularized through early stopping monitored on validation accuracy 
+with restoration of the best-performing weights and an adaptive learning-rate 
+schedule (ReduceLROnPlateau), which reduces the learning rate when validation 
+performance fails to improve for a predefined number of epochs. 
+Together, these mechanisms promote stable convergence and mitigate overfitting 
+while limiting unnecessary computation once validation performance saturates.
 
 \subsection{Hyperparameter Tuning and Final Model Selection}
 
