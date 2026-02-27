@@ -8,7 +8,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import tensorflow as tf
 from PIL import Image, ImageOps
-from sklearn.metrics import classification_report, confusion_matrix, f1_score, precision_recall_fscore_support
 
 from rockpaperscissors import config, evaluation
 
@@ -269,47 +268,6 @@ def _recalibrate_probs(probs, y_true=None, mode="uniform", alpha=1.0, eps=1e-6):
     return probs_corr, w, target_prior, pred_prior
 
 
-# ------------------------- viz -------------------------
-def _save_misclassified_from_probs(
-    file_paths,
-    probs,
-    y_true,
-    class_names,
-    top_n=12,
-    outpath="reports/misclassified.png",
-    pick="confident",
-):
-    y_pred = probs.argmax(axis=1)
-    conf = probs.max(axis=1)
-    wrong_idxs = np.where(y_true != y_pred)[0]
-    if wrong_idxs.size == 0:
-        print("No misclassified image in the split.")
-        return
-    order = (
-        np.argsort(-conf[wrong_idxs])
-        if pick == "confident"
-        else np.argsort(conf[wrong_idxs])
-    )
-    sel = wrong_idxs[order][:top_n]
-
-    n = len(sel)
-    cols = max(1, int(math.sqrt(n)))
-    rows = math.ceil(n / cols)
-    plt.figure(figsize=(cols * 2.6, rows * 2.6))
-    for k, j in enumerate(sel, 1):
-        img = Image.open(file_paths[j]).convert("RGB")
-        plt.subplot(rows, cols, k)
-        plt.imshow(img)
-        plt.axis("off")
-        plt.title(
-            f"T:{class_names[y_true[j]]}  P:{class_names[y_pred[j]]}  c:{conf[j]:.2f}"
-        )
-    Path(outpath).parent.mkdir(exist_ok=True, parents=True)
-    plt.tight_layout()
-    plt.savefig(outpath, dpi=150, bbox_inches="tight")
-    plt.close()
-
-
 # ------------------------- main -------------------------
 def main(model_path: str, data_dir: str, outdir: str | None):
     """
@@ -448,35 +406,21 @@ def main(model_path: str, data_dir: str, outdir: str | None):
     else:
         print("▶ Using RAW posterior (no recalibration).")
 
-    # final metrics
-    y_pred = probs.argmax(axis=1)
-    labels = list(range(len(config.CLASSES)))
-    report_txt = classification_report(
-        y_true, y_pred, labels=labels, target_names=config.CLASSES, zero_division=0
-    )
-    cm = confusion_matrix(y_true, y_pred, labels=labels)
-    acc = float((y_true == y_pred).mean())
+    # final metrics (computed from probabilities in evaluation.py)
+    m = evaluation.metrics_from_probs(y_true, probs, list(config.CLASSES))
 
-    print(("\nAccuracy (TTA): " if USE_TTA else "\nAccuracy: ") + f"{acc:.4f}\n")
+    y_pred = m["y_pred"]
+    acc = m["acc"]
+    macro_f1 = m["macro_f1"]
+    cm = m["cm"]
+    report_txt = m["report_txt"]
+    per_class = m["per_class"]
+    true_counts = m["true_counts"]
+    pred_counts = m["pred_counts"]
+
+    print(("\nAccuracy (TTA): " if USE_TTA else "\nAccuracy: ") + f"{acc:.4f}")
+    print(f"Macro F1: {macro_f1:.4f}\n")
     print(report_txt)
-
-    # ---- numeric report ----
-    true_counts = np.bincount(y_true, minlength=len(config.CLASSES))
-    pred_counts = np.bincount(y_pred, minlength=len(config.CLASSES))
-    macro_f1 = f1_score(y_true, y_pred, average="macro", zero_division=0)
-    prec, rec, f1s, sup = precision_recall_fscore_support(
-        y_true, y_pred, labels=labels, zero_division=0
-    )
-
-    per_class = {
-        cls: {
-            "precision": float(prec[i]),
-            "recall": float(rec[i]),
-            "f1": float(f1s[i]),
-            "support": int(sup[i]),
-        }
-        for i, cls in enumerate(config.CLASSES)
-    }
 
     settings = {
         "IMG_SIZE": getattr(config, "IMG_SIZE", 96),
@@ -517,11 +461,11 @@ def main(model_path: str, data_dir: str, outdir: str | None):
         title=f"Confusion Matrix – {tag.replace('_', ' ')}",
     )
     try:
-        _save_misclassified_from_probs(
+        evaluation.save_misclassified_from_probs(
             file_paths,
             probs,
             y_true,
-            config.CLASSES,
+            list(config.CLASSES),
             top_n=12,
             outpath=os.path.join(outdir, f"misclassified_{tag}.png"),
         )
@@ -533,7 +477,6 @@ def main(model_path: str, data_dir: str, outdir: str | None):
 
 
 if __name__ == "__main__":
-    # script from terminal: ex. python evaluate_myhands.py --model models/model_c_best.keras --dir my_hands
     parser = argparse.ArgumentParser(
         description="Evaluate a saved .keras model on your labeled hand-gesture photos."
     )
@@ -544,7 +487,7 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--dir",
-        default="my_hands",
+        default="data/my_hands_data",
         help="Root folder with subfolders rock/paper/scissors",
     )
     parser.add_argument(
