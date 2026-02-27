@@ -4,6 +4,7 @@
 \usepackage{fontspec}
 \usepackage{unicode-math}
 
+\usepackage{float}
 \usepackage{placeins}
 \usepackage{graphicx}
 \usepackage[font=small,labelfont=bf,textfont=it]{caption}
@@ -557,24 +558,37 @@ as the final architecture for subsequent generalization and robustness
 analyses.
 
 \paragraph{Prediction confidence on the validation set.}
-In addition to accuracy-based metrics, the distribution of predicted probabilities provides a coarse \emph{proxy} for confidence calibration.
-Although this does not constitute a formal calibration assessment (e.g., ECE), it provides a coarse indicator of predictive confidence.
-On the validation set, the mean maximum softmax probability increases with model expressiveness (A: 0.59, B: 0.88, C: 0.93), while class-averaged predicted probabilities remain approximately balanced across classes, suggesting that performance gains are not driven by degenerate class priors.
-This diagnostic is later used to interpret robustness under domain shift (Section~4).
-For completeness, validation-set confidence diagnostics are summarized in Table~\ref{tab:confidence_diagnostics}.
+In addition to accuracy-based metrics, the distribution of predicted
+probabilities provides a coarse proxy for predictive confidence.
+Although this does not constitute a formal calibration assessment, it 
+offers a simple summary of how confident each model is in its 
+predictions. On the validation set, the mean maximum softmax probability 
+increases markedly with model expressiveness (Model A: 0.44, 
+Model B: 0.90, Model C: 0.95). This trend mirrors the improvement observed 
+in classification accuracy and indicates that higher-performing architectures 
+not only make fewer errors but also assign substantially higher confidence to their
+decisions.
+
+The relatively low average confidence of Model A is consistent with its
+limited discriminative capacity and frequent class confusion, whereas
+Models B and C operate in a high-confidence regime with reduced
+uncertainty. Importantly, class-averaged predicted probabilities remain
+approximately balanced across classes, suggesting that improvements are
+not driven by degenerate class priors but by genuinely more separable
+representations. For completeness, validation-set confidence diagnostics
+are summarized in Table~\ref{tab:confidence_diagnostics}.
 
 \begin{table}[h]
 \centering
-\caption{Prediction confidence diagnostics on the validation set.}
+\caption{Prediction confidence diagnostics on the validation set -mean and standard deviation of the maximum softmax probability across samples.}
 \label{tab:confidence_diagnostics}
 \begin{tabular}{lc}
 \hline
-\textbf{Model} &
-\textbf{Val max-prob ($\mu \pm \sigma$)} \\
+Model & Val max-prob ($\mu \pm \sigma$) \\
 \hline
-Model A & $0.59 \pm 0.15$ \\
-Model B & $0.88 \pm 0.11$ \\
-Model C & $0.93 \pm 0.08$ \\
+Model A (best) & $0.44 \pm 0.09$ \\
+Model B (best) & $0.90 \pm 0.14$ \\
+Model C (best) & $0.95 \pm 0.06$ \\
 \hline
 \end{tabular}
 \end{table}
@@ -671,7 +685,7 @@ validation confusion matrices for the three final architectures. These
 matrices summarize how misclassifications are distributed across classes and
 offer a global complement to the analysis presented below.
 
-\begin{figure}[htbp]
+\begin{figure}[H]
 \centering
 \includegraphics[width=0.32\linewidth]{model_A_final/val_confusion_matrix.png}
 \hfill

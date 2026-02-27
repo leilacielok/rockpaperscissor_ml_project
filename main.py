@@ -26,11 +26,6 @@ Path("models").mkdir(exist_ok=True)
 Path("reports").mkdir(exist_ok=True)
 
 def write_best_summary(out_csv="reports/summary_best.csv"):
-    import csv
-    from pathlib import Path
-    import numpy as np
-    import tensorflow as tf
-
     Path("reports").mkdir(exist_ok=True)
 
     # validation set deterministico, senza augmentation
@@ -55,11 +50,22 @@ def write_best_summary(out_csv="reports/summary_best.csv"):
             float(macro["recall"]),
             float(macro["f1-score"]),
             int(model.count_params()),
+            float(res["val_conf_mean"]),
+            float(res["val_conf_std"]),
         ])
 
     with open(out_csv, "w", newline="", encoding="utf-8") as f:
         w = csv.writer(f)
-        w.writerow(["model", "val_accuracy", "precision_macro", "recall_macro", "f1_macro", "params"])
+        w.writerow([
+            "model",
+            "val_accuracy",
+            "precision_macro",
+            "recall_macro",
+            "f1_macro",
+            "params",
+            "val_conf_mean",
+            "val_conf_std",
+        ])
         w.writerows(rows)
 
     print(f"Wrote {out_csv}")

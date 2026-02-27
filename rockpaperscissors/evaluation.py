@@ -33,6 +33,10 @@ def evaluate_on(ds, model, class_names, debug=False):
 
     y_true = np.concatenate(y_true)
     probs_all = np.concatenate(probs_all, axis=0)
+    
+    pmax = probs_all.max(axis=1)
+    conf_mean = float(pmax.mean())
+    conf_std = float(pmax.std())
 
     if debug:
         pmax = probs_all.max(axis=1)
@@ -45,6 +49,8 @@ def evaluate_on(ds, model, class_names, debug=False):
 
     m["loss"] = float(loss)
     m["keras_acc"] = float(acc)  
+    m["val_conf_mean"] = conf_mean
+    m["val_conf_std"] = conf_std
 
     return m
 
