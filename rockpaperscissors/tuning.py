@@ -52,7 +52,11 @@ def run_tuning(
             print(f"\n=== Trying {name} | lr={lr}, batch={batch}, augment={aug} ===")
 
             train_ds, val_ds, _ = data_utils.load_train_val_stratified(
-                validation_split=0.2, augment=aug, batch_size=batch
+                validation_split=0.2,
+                augment=aug,
+                batch_size=batch,
+                cache_train=False,
+                cache_val=False,
             )
 
             priors = data_utils.compute_class_priors(train_ds, len(config.CLASSES))
@@ -70,12 +74,10 @@ def run_tuning(
             train_input = train_ds.take(steps_train) if steps_train else train_ds
             val_input = val_ds.take(steps_val) if steps_val else val_ds
 
-            t0 = time.time()
             history, runtime = training.train(
                 model, train_input, val_input, epochs=epochs, callbacks=cbs
             )
-            wall = time.time() - t0
-
+            
             val_acc = float(max(history.history["val_accuracy"]))
             n_params = int(model.count_params())
 
@@ -85,10 +87,8 @@ def run_tuning(
                 "batch": batch,
                 "augment": aug,
                 "val_acc": val_acc,
-                "runtime_fit": float(runtime),
-                "runtime_wall": float(wall),
+                "runtime": float(runtime),
                 "n_params": n_params,
-                "checkpoint": None,
             }
             results.append(row)
             if best is None or val_acc > best["val_acc"]:

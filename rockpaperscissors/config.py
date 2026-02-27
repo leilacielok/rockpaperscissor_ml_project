@@ -16,7 +16,7 @@ EVAL_ALWAYS_SUBDIR = False
 
 
 TUNING = False
-TUNING_MODELS = ["c"]  # a,b,c / model_a, model_b, model_c,
+TUNING_MODELS = ["a", "b", "c"]  # a,b,c / model_a, model_b, model_c,
 TUNING_EPOCHS = 10
 TUNING_STEPS_TRAIN = None
 TUNING_STEPS_VAL = None
