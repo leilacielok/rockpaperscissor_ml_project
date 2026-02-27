@@ -25,6 +25,7 @@ os.environ["PYTHONHASHSEED"] = str(config.SEED)
 Path("models").mkdir(exist_ok=True)
 Path("reports").mkdir(exist_ok=True)
 
+
 def write_best_summary(out_csv="reports/summary_best.csv"):
     Path("reports").mkdir(exist_ok=True)
 
@@ -138,7 +139,7 @@ def train_and_report(model_name, model, train_ds, val_ds, file_paths_val):
 
 
 def main():
-    
+
     if getattr(config, "MAKE_BEST_SUMMARY", False):
         write_best_summary()
         return

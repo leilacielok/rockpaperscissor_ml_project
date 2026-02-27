@@ -43,7 +43,9 @@ def run_tuning(
     Path(checkpoint_dir).mkdir(parents=True, exist_ok=True)
     Path(Path(report_csv).parent).mkdir(parents=True, exist_ok=True)
 
-    results, best = [], None
+    results = []
+    best_global = None
+    best_by_model = {}
 
     for name in model_names:
         for lr, batch, aug in product(
@@ -91,18 +93,25 @@ def run_tuning(
                 "n_params": n_params,
             }
             results.append(row)
-            if best is None or val_acc > best["val_acc"]:
-                best = row
-            print("Current best:", best)
+            prev = best_by_model.get(name)
+            if prev is None or val_acc > prev["val_acc"]:
+                best_by_model[name] = row
+
+            if best_global is None or val_acc > best_global["val_acc"]:
+                best_global = row
 
     with open(report_csv, "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=list(results[0].keys()))
         writer.writeheader()
         writer.writerows(results)
 
-    print("=== BEST CONFIG ===", best)
+    print("=== BEST PER MODEL ===")
+    for k, v in best_by_model.items():
+        print(k, "->", v)
+
+    print("=== BEST GLOBAL ===", best_global)
     print(f"Report saved to: {report_csv}")
-    return best
+    return best_by_model, best_global
 
 
 # ----------------- final train -----------------
@@ -202,15 +211,16 @@ def _map_model_token(token):
 
 def main():
     model_names = [_map_model_token(m) for m in config.TUNING_MODELS]
-    best = run_tuning(
+    best_by_model, best_global = run_tuning(
         model_names=model_names,
         epochs=config.TUNING_EPOCHS,
         steps_train=config.TUNING_STEPS_TRAIN,
         steps_val=config.TUNING_STEPS_VAL,
     )
-    ckpt = f"models/{best['model_name']}_best.keras"
 
-    run_final_training(best, epochs=config.FINAL_EPOCHS, checkpoint_path=ckpt)
+    for name, best in best_by_model.items():
+        ckpt = f"models/{name}_best.keras"
+        run_final_training(best, epochs=config.FINAL_EPOCHS, checkpoint_path=ckpt)
 
 
 if __name__ == "__main__":
