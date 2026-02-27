@@ -599,13 +599,17 @@ optimization translates into generalization within the validation distribution.
 \end{figure}
 
 
-For the baseline architecture A, both training and validation loss
-decrease smoothly during the initial epochs and gradually approach a plateau, 
-while accuracy saturates at relatively low values. The absence of a
-widening gap between training and validation curves indicates that the
-model does not overfit the data. Instead, the early stagnation of
-performance suggests limited representational capacity: the model is
-unable to further reduce classification error even on the training set.
+For the baseline architecture A, both training and validation loss 
+decrease steadily and approach a plateau; accuracy improves slowly 
+and remains substantially below models B/C. Validation accuracy is 
+noticeably noisier and often slightly higher than training accuracy, 
+consistent with a limited-capacity model trained under augmentation/
+regularization rather than with memorization-driven overfitting. 
+The absence of a widening gap in the overfitting direction (i.e., 
+training performance substantially exceeding validation performance) 
+indicates that the model does not overfit the data. Instead, the early 
+stagnation of performance suggests limited representational capacity: 
+the model is unable to further reduce classification error even on the training set.
 In practical terms, this behaviour is characteristic of mild
 underfitting, where the architecture captures only coarse visual
 patterns and fails to exploit additional training iterations to improve
@@ -622,21 +626,26 @@ to learn more expressive features without sacrificing generalization,
 leading to consistent improvements in both error reduction and
 predictive accuracy.
 
-Model C shows similarly smooth and stable convergence,but with more rapid 
+Model C shows similarly smooth and stable convergence, but with more rapid 
 early error reduction and lower final loss values. Training and
 validation curves remain tightly coupled, with only a minimal and
-non-systematic generalization gap. This behaviour indicates that the
-increased model capacity is effectively controlled through
-regularization, allowing the network to fully exploit its expressiveness
-without overfitting. In practice, this translates into rapid learning of
-highly discriminative representations and stable convergence toward an
-optimal solution.
+non-systematic generalization gap (the training loss appears slightly 
+below validation loss at convergence).
+This pattern indicates that the increased model capacity does not translate 
+into late-stage divergence between training and validation performance. 
+Instead, the adopted training configuration appears sufficient to maintain 
+stable generalization within the validation distribution. The model is 
+therefore able to leverage its higher representational capacity without 
+exhibiting clear signs of memorization-driven overfitting.
+In practical terms, this behaviour corresponds to rapid acquisition of 
+highly discriminative features and convergence toward a stable low-loss 
+regime rather than unstable or capacity-induced degradation.
 
 Overall, the progression of training dynamics across models mirrors the
 performance trends observed in the classification metrics. Model A is
 constrained by insufficient capacity, model B achieves an effective
 balance between learning and generalization, and model C combines high
-expressiveness with stable optimization. These dynamics confirm that the
+expressiveness with stable optimization. These dynamics strongly suggest that the
 observed performance differences are rooted in structural properties of
 the architectures rather than in optimization artefacts or training
 instability.
